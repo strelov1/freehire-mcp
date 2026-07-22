@@ -174,6 +174,48 @@ export class Client {
     return (await this.do("POST", `/api/v1/submissions/${id}/reject`, { reason })).data;
   }
 
+  // CV-tailoring endpoints (beta-gated on the server), acting as the authenticated
+  // user. Mirrors the freehire CLI's `cv` command group.
+
+  /** tailorCVContext returns the cached fit-analysis context a tailored CV should
+   * reframe toward — verdict, recommendation, and the missing_have / missing_gap
+   * requirement split (GET /me/cvs/:id/tailor-context). */
+  async tailorCVContext(cvID: number): Promise<unknown> {
+    return (await this.do("GET", `${cvPath(cvID)}/tailor-context`)).data;
+  }
+
+  /** getCV fetches a CV with its full document (GET /me/cvs/:id). */
+  async getCV(cvID: number): Promise<unknown> {
+    return (await this.do("GET", cvPath(cvID))).data;
+  }
+
+  /** patchCV applies one field-level patch to a CV (PATCH /me/cvs/:id). patch is a
+   * cv.Patch object (op + address + payload); the server sanitizes and validates it,
+   * so a malformed patch comes back as a 422 ApiError. */
+  async patchCV(cvID: number, patch: unknown): Promise<unknown> {
+    return (await this.do("PATCH", cvPath(cvID), patch)).data;
+  }
+
+  /** renderCV downloads a CV rendered to PDF (GET /me/cvs/:id/pdf). Unlike the other
+   * endpoints this returns raw PDF bytes, not the JSON envelope, so it bypasses do(). */
+  async renderCV(cvID: number): Promise<Uint8Array> {
+    const resp = await this.fetchImpl(this.baseURL + `${cvPath(cvID)}/pdf`, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${this.token}`, Accept: "application/pdf" },
+    });
+    const buf = new Uint8Array(await resp.arrayBuffer());
+    if (!resp.ok) {
+      let message = "";
+      try {
+        message = (JSON.parse(Buffer.from(buf).toString("utf8")) as Envelope).error ?? "";
+      } catch {
+        // A non-JSON error body just leaves the message empty; the status still carries.
+      }
+      throw new ApiError(resp.status, message);
+    }
+    return buf;
+  }
+
   private async do(method: string, path: string, body?: unknown): Promise<Envelope> {
     const headers: Record<string, string> = {
       Authorization: `Bearer ${this.token}`,
@@ -207,4 +249,9 @@ export class Client {
 function withQuery(path: string, params: URLSearchParams): string {
   const enc = params.toString();
   return enc ? `${path}?${enc}` : path;
+}
+
+/** cvPath is the base API path for a tailored CV by id. */
+function cvPath(cvID: number): string {
+  return `/api/v1/me/cvs/${cvID}`;
 }

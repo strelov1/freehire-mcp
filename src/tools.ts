@@ -12,8 +12,12 @@ import { buildFacetParams, marketFacetShape, type FacetInput } from "./facets.js
  * error surfaces as a tool result rather than a failed server launch. */
 export type GetClient = () => Client;
 
+type Content =
+  | { type: "text"; text: string }
+  | { type: "resource"; resource: { uri: string; mimeType: string; blob: string } };
+
 type ToolResult = {
-  content: { type: "text"; text: string }[];
+  content: Content[];
   isError?: boolean;
 };
 
@@ -202,6 +206,77 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
       annotations: { readOnlyHint: true },
     },
     async ({ filter, limit, offset }) => run(() => getClient().myJobs(filter, limit, offset)),
+  );
+
+  // CV tailoring — read the fit context, read/patch the CV document, render a PDF.
+  // Beta-gated on the server; acts as the authenticated user. Addressed by CV id.
+  const cvId = z.number().int().describe("The CV id (from the tailoring session bootstrap).");
+
+  server.registerTool(
+    "cv_context",
+    {
+      description:
+        "Show the cached fit-analysis context a tailored CV should reframe toward: verdict, recommendation, dimension comments, and the requirement split — missing_have (reframe existing evidence) vs missing_gap (ask the candidate before adding). Read this before editing.",
+      inputSchema: { id: cvId },
+      annotations: { readOnlyHint: true },
+    },
+    async ({ id }) => run(() => getClient().tailorCVContext(id)),
+  );
+
+  server.registerTool(
+    "cv_get",
+    {
+      description:
+        "Fetch a tailored CV with its full document (header, summary, experience bullets, skill groups).",
+      inputSchema: { id: cvId },
+      annotations: { readOnlyHint: true },
+    },
+    async ({ id }) => run(() => getClient().getCV(id)),
+  );
+
+  server.registerTool(
+    "cv_edit",
+    {
+      description:
+        "Apply ONE field-level patch to a tailored CV. `patch` is a cv.Patch object: an `op` plus its address/payload. Ops: set_summary, set_header_field, add_bullet, replace_bullet, remove_bullet, reorder_bullets, set_skill_group, set_stack. The server sanitizes and validates it (a bad patch is a 422). Never fabricate: reframe existing evidence for missing_have requirements; for missing_gap, confirm with the candidate first. Export the finished PDF with `cv_render`.",
+      inputSchema: {
+        id: cvId,
+        patch: z
+          .record(z.unknown())
+          .describe('One cv.Patch object, e.g. {"op":"add_bullet","experience":0,"value":"Cut p99 latency 40%"}.'),
+      },
+      annotations: { readOnlyHint: false },
+    },
+    async ({ id, patch }) => run(() => getClient().patchCV(id, patch)),
+  );
+
+  server.registerTool(
+    "cv_render",
+    {
+      description:
+        "Render a tailored CV to an ATS PDF, returned as a base64 resource (application/pdf). The bytes are large and not human-readable to the model — call it to produce the deliverable, not to inspect content.",
+      inputSchema: { id: cvId },
+      annotations: { readOnlyHint: true, idempotentHint: true },
+    },
+    async ({ id }) => {
+      try {
+        const pdf = await getClient().renderCV(id);
+        return {
+          content: [
+            {
+              type: "resource",
+              resource: {
+                uri: `cv://${id}.pdf`,
+                mimeType: "application/pdf",
+                blob: Buffer.from(pdf).toString("base64"),
+              },
+            },
+          ],
+        };
+      } catch (err) {
+        return fail(err);
+      }
+    },
   );
 
   server.registerTool(

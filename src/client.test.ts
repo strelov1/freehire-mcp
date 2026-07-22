@@ -100,6 +100,51 @@ describe("Client", () => {
     expect(last.url).toBe("/api/v1/jobs/my-job/apply");
   });
 
+  it("tailorCVContext GETs the tailor-context path and unwraps data", async () => {
+    handler = () => ({ status: 200, body: { data: { verdict: "strong" } } });
+    const data = await newClient().tailorCVContext(7);
+    expect(last.method).toBe("GET");
+    expect(last.url).toBe("/api/v1/me/cvs/7/tailor-context");
+    expect(last.auth).toBe("Bearer fhk_test");
+    expect(data).toEqual({ verdict: "strong" });
+  });
+
+  it("getCV GETs the CV by id", async () => {
+    handler = () => ({ status: 200, body: { data: { id: 7 } } });
+    const data = await newClient().getCV(7);
+    expect(last.method).toBe("GET");
+    expect(last.url).toBe("/api/v1/me/cvs/7");
+    expect(data).toEqual({ id: 7 });
+  });
+
+  it("patchCV PATCHes the CV with the patch as the JSON body", async () => {
+    handler = () => ({ status: 200, body: { data: { id: 7 } } });
+    const patch = { op: "add_bullet", experience: 0, value: "Led the migration" };
+    await newClient().patchCV(7, patch);
+    expect(last.method).toBe("PATCH");
+    expect(last.url).toBe("/api/v1/me/cvs/7");
+    expect(last.contentType).toBe("application/json");
+    expect(JSON.parse(last.body)).toEqual(patch);
+  });
+
+  it("renderCV GETs the pdf path and returns the raw response bytes", async () => {
+    handler = () => ({ status: 200, body: { pdf: "x" } });
+    const pdf = await newClient().renderCV(7);
+    expect(last.method).toBe("GET");
+    expect(last.url).toBe("/api/v1/me/cvs/7/pdf");
+    expect(last.auth).toBe("Bearer fhk_test");
+    expect(pdf).toBeInstanceOf(Uint8Array);
+    expect(Buffer.from(pdf).toString()).toBe('{"pdf":"x"}');
+  });
+
+  it("renderCV maps a non-2xx to an ApiError carrying the status", async () => {
+    handler = () => ({ status: 422, body: { error: "bad patch" } });
+    await expect(newClient().renderCV(7)).rejects.toMatchObject({
+      name: "ApiError",
+      status: 422,
+    });
+  });
+
   it("maps a non-2xx response to an ApiError carrying the status and message", async () => {
     handler = () => ({ status: 401, body: { error: "unauthorized" } });
     await expect(newClient().me()).rejects.toMatchObject({

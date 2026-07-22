@@ -53,6 +53,10 @@ describe("registerTools", () => {
       [
         "apply",
         "company",
+        "cv_context",
+        "cv_edit",
+        "cv_get",
+        "cv_render",
         "facets",
         "job",
         "jobs_add",
@@ -95,6 +99,26 @@ describe("registerTools", () => {
     expect(res.isError).toBeFalsy();
     const text = (res.content as { type: string; text: string }[])[0].text;
     expect(JSON.parse(text)).toEqual({ email: "me@example.com" });
+  });
+
+  it("cv_edit PATCHes the CV with the patch body", async () => {
+    apiBody = { data: { id: 5 } };
+    const patch = { op: "set_summary", value: "Senior backend engineer" };
+    const res = await mcp.callTool({ name: "cv_edit", arguments: { id: 5, patch } });
+    expect(res.isError).toBeFalsy();
+    expect(last.method).toBe("PATCH");
+    expect(last.url).toBe("/api/v1/me/cvs/5");
+  });
+
+  it("cv_render returns the PDF as a base64 resource", async () => {
+    apiBody = { pdf: "x" };
+    const res = await mcp.callTool({ name: "cv_render", arguments: { id: 5 } });
+    expect(res.isError).toBeFalsy();
+    expect(last.url).toBe("/api/v1/me/cvs/5/pdf");
+    const resource = (res.content as { type: string; resource?: { mimeType: string; blob: string } }[])[0];
+    expect(resource.type).toBe("resource");
+    expect(resource.resource?.mimeType).toBe("application/pdf");
+    expect(Buffer.from(resource.resource!.blob, "base64").toString()).toBe('{"pdf":"x"}');
   });
 
   it("surfaces an API error as an isError result with an auth hint on 401", async () => {
