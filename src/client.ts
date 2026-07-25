@@ -70,14 +70,20 @@ export class Client {
     return (await this.do("GET", "/api/v1/auth/me")).data;
   }
 
-  /** search runs a keyword job search with optional facet filters (GET /jobs/search).
-   * params carries the facet query values; q/limit/offset are set here. */
+  /** search runs a keyword job search with optional facet filters
+   * (GET /agent/jobs/search). That endpoint runs the same query as the web's
+   * /jobs/search but, for programmatic consumers, replaces the index's truncated
+   * preview with each job's full description — so a host can screen a result set
+   * without a follow-up `job` call per hit. Markdown keeps the posting's lists and
+   * headings intact. params carries the facet query values; q/limit/offset are set here. */
   async search(query: string, limit: number, offset: number, params: URLSearchParams): Promise<Page> {
     params.set("q", query);
     params.set("limit", String(limit));
     params.set("offset", String(offset));
     params.set("semantic_ratio", "0"); // keyword search, matching the web client
-    const env = await this.do("GET", `/api/v1/jobs/search?${params.toString()}`);
+    params.set("include_description", "true");
+    params.set("description_format", "markdown");
+    const env = await this.do("GET", `/api/v1/agent/jobs/search?${params.toString()}`);
     return { data: env.data, total: env.meta?.total ?? 0 };
   }
 

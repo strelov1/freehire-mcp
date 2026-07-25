@@ -87,7 +87,7 @@ describe("registerTools", () => {
     expect(res.isError).toBeFalsy();
     expect(last.auth).toBe("Bearer fhk_test");
     const q = new URLSearchParams(last.url.split("?")[1]);
-    expect(last.url.startsWith("/api/v1/jobs/search")).toBe(true);
+    expect(last.url.startsWith("/api/v1/agent/jobs/search")).toBe(true);
     expect(q.get("q")).toBe("go");
     expect(q.get("regions")).toBe("eu");
     expect(q.get("skills")).toBe("docker");

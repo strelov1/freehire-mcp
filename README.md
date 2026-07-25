@@ -1,6 +1,6 @@
 # freehire MCP server
 
-An [MCP](https://modelcontextprotocol.io) server over the [freehire](https://freehire.dev)
+An [MCP](https://modelcontextprotocol.io) server over the [freehire](https://freehire.me)
 job API. It lets any MCP host — Claude Desktop, Claude Code, or a compatible agent —
 **search, filter, and apply to IT jobs** without a browser, authenticating with a
 personal API key. It mirrors the [freehire CLI](https://github.com/strelov1/freehire-cli):
@@ -24,19 +24,19 @@ configuration (Claude Desktop → **Settings → Developer → Edit config**, or
 }
 ```
 
-Create the `fhk_…` key in the web app (freehire.dev → account menu → **API keys**).
+Create the `fhk_…` key in the web app (freehire.me → account menu → **API keys**).
 If you already use the freehire CLI (`freehire auth login`), you can **omit `env`** —
 the server reads the same `~/.freehire/creds.json`.
 
 ## Authentication
 
 The token and API base URL resolve with precedence
-**env → `~/.freehire/creds.json` → default `https://freehire.dev`**:
+**env → `~/.freehire/creds.json` → default `https://freehire.me`**:
 
 | What | Sources |
 |------|---------|
 | Token | `FREEHIRE_TOKEN` → creds file |
-| API base URL | `FREEHIRE_API_URL` → creds file → `https://freehire.dev` |
+| API base URL | `FREEHIRE_API_URL` → creds file → `https://freehire.me` |
 
 The server only reads the credentials file (it never writes it — logging in stays the
 CLI's job). If no token is configured, tools return a clear "not authenticated" error
@@ -48,7 +48,7 @@ rather than the server failing to start.
 |------|---------|
 | `whoami` | Authenticated user (verify the key). |
 | `facets` | The filter/skill vocabulary: every facet's live values with counts. **Call first.** |
-| `search` | Keyword + facet job search; returns jobs and the total match count. |
+| `search` | Keyword + facet job search; returns jobs **with their full description as markdown** and the total match count. |
 | `market_fit` | Score a skill list against live market demand (coverage + gaps). |
 | `job` | A single job's full content by slug. |
 | `company` | A company and its open jobs by slug. |
@@ -73,6 +73,10 @@ parameters: `remote`, `region`, `country`, `city`, `company`, `category`, `role`
 `facets` map (`{"source": "greenhouse"}`) for any other facet in the vocabulary.
 Discover valid values with the `facets` tool — do not invent them. In `search`, `skills`
 is a filter; in `market_fit`, `skills` is the measured set.
+
+**Descriptions.** `search` reads the API's agent endpoint, so every hit already carries
+the posting's full description rendered as markdown — a host can screen a result set
+without a `job` call per hit. Descriptions are long, so keep `limit` modest.
 
 Each tool returns the raw API `data` as JSON text; an API error becomes an `isError`
 result carrying the HTTP status (a 401 adds an auth hint).
