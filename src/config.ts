@@ -8,7 +8,7 @@ import os from "node:os";
 import path from "node:path";
 
 /** DEFAULT_API_URL is the production API base when none is configured. */
-export const DEFAULT_API_URL = "https://freehire.dev";
+export const DEFAULT_API_URL = "https://freehire.me";
 
 /** Environment variables that override the stored credentials. */
 export const ENV_TOKEN = "FREEHIRE_TOKEN";

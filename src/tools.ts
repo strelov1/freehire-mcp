@@ -75,10 +75,16 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
     "search",
     {
       description:
-        "Search open jobs by keyword with optional facet filters. Returns matching jobs (title, company, location, public_slug) and the total match count. Use the returned slug with `job`, `apply`, `save`, etc.",
+        "Search open jobs by keyword with optional facet filters. Each result carries the job's FULL description as markdown alongside title, company, location and public_slug, plus the total match count — so you can screen a whole result set without calling `job` per hit. Use the returned slug with `job`, `apply`, `save`, etc.",
       inputSchema: {
         query: z.string().describe("Keyword query, e.g. 'golang backend'. Empty string matches all."),
-        limit: z.number().int().min(1).max(100).default(20).describe("Max results to return."),
+        limit: z
+          .number()
+          .int()
+          .min(1)
+          .max(100)
+          .default(20)
+          .describe("Max results to return. Each result includes a full job description, so prefer a modest value."),
         offset: z.number().int().min(0).default(0).describe("Pagination offset."),
         skills: z
           .array(z.string())

@@ -71,6 +71,10 @@ describe("Client", () => {
     expect(q.get("offset")).toBe("20");
     expect(q.get("regions")).toBe("eu");
     expect(q.get("semantic_ratio")).toBe("0");
+    // The agent endpoint, always asked for full descriptions as markdown.
+    expect(last.url.startsWith("/api/v1/agent/jobs/search")).toBe(true);
+    expect(q.get("include_description")).toBe("true");
+    expect(q.get("description_format")).toBe("markdown");
   });
 
   it("coverage POSTs skills in the body and facets in the query", async () => {
