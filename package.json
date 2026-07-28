@@ -1,7 +1,7 @@
 {
   "name": "freehire-mcp",
-  "version": "0.3.0",
-  "description": "MCP server over the freehire job API — search, filter, and apply to IT jobs from any MCP host.",
+  "version": "0.4.0",
+  "description": "MCP server over the freehire job API \u2014 search, filter, and apply to IT jobs from any MCP host.",
   "type": "module",
   "bin": {
     "freehire-mcp": "dist/index.js"

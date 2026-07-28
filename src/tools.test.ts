@@ -102,19 +102,19 @@ describe("registerTools", () => {
   });
 
   it("cv_edit PATCHes the CV with the patch body", async () => {
-    apiBody = { data: { id: 5 } };
+    apiBody = { data: { id: "3f2a9c14-7b6e-4a58-9d21-8e4c5f0b1a76" } };
     const patch = { op: "set_summary", value: "Senior backend engineer" };
-    const res = await mcp.callTool({ name: "cv_edit", arguments: { id: 5, patch } });
+    const res = await mcp.callTool({ name: "cv_edit", arguments: { id: "3f2a9c14-7b6e-4a58-9d21-8e4c5f0b1a76", patch } });
     expect(res.isError).toBeFalsy();
     expect(last.method).toBe("PATCH");
-    expect(last.url).toBe("/api/v1/me/cvs/5");
+    expect(last.url).toBe("/api/v1/me/cvs/3f2a9c14-7b6e-4a58-9d21-8e4c5f0b1a76");
   });
 
   it("cv_render returns the PDF as a base64 resource", async () => {
     apiBody = { pdf: "x" };
-    const res = await mcp.callTool({ name: "cv_render", arguments: { id: 5 } });
+    const res = await mcp.callTool({ name: "cv_render", arguments: { id: "3f2a9c14-7b6e-4a58-9d21-8e4c5f0b1a76" } });
     expect(res.isError).toBeFalsy();
-    expect(last.url).toBe("/api/v1/me/cvs/5/pdf");
+    expect(last.url).toBe("/api/v1/me/cvs/3f2a9c14-7b6e-4a58-9d21-8e4c5f0b1a76/pdf");
     const resource = (res.content as { type: string; resource?: { mimeType: string; blob: string } }[])[0];
     expect(resource.type).toBe("resource");
     expect(resource.resource?.mimeType).toBe("application/pdf");

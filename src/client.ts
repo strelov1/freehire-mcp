@@ -186,25 +186,25 @@ export class Client {
   /** tailorCVContext returns the cached fit-analysis context a tailored CV should
    * reframe toward — verdict, recommendation, and the missing_have / missing_gap
    * requirement split (GET /me/cvs/:id/tailor-context). */
-  async tailorCVContext(cvID: number): Promise<unknown> {
+  async tailorCVContext(cvID: string): Promise<unknown> {
     return (await this.do("GET", `${cvPath(cvID)}/tailor-context`)).data;
   }
 
   /** getCV fetches a CV with its full document (GET /me/cvs/:id). */
-  async getCV(cvID: number): Promise<unknown> {
+  async getCV(cvID: string): Promise<unknown> {
     return (await this.do("GET", cvPath(cvID))).data;
   }
 
   /** patchCV applies one field-level patch to a CV (PATCH /me/cvs/:id). patch is a
    * cv.Patch object (op + address + payload); the server sanitizes and validates it,
    * so a malformed patch comes back as a 422 ApiError. */
-  async patchCV(cvID: number, patch: unknown): Promise<unknown> {
+  async patchCV(cvID: string, patch: unknown): Promise<unknown> {
     return (await this.do("PATCH", cvPath(cvID), patch)).data;
   }
 
   /** renderCV downloads a CV rendered to PDF (GET /me/cvs/:id/pdf). Unlike the other
    * endpoints this returns raw PDF bytes, not the JSON envelope, so it bypasses do(). */
-  async renderCV(cvID: number): Promise<Uint8Array> {
+  async renderCV(cvID: string): Promise<Uint8Array> {
     const resp = await this.fetchImpl(this.baseURL + `${cvPath(cvID)}/pdf`, {
       method: "GET",
       headers: { Authorization: `Bearer ${this.token}`, Accept: "application/pdf" },
@@ -258,6 +258,6 @@ function withQuery(path: string, params: URLSearchParams): string {
 }
 
 /** cvPath is the base API path for a tailored CV by id. */
-function cvPath(cvID: number): string {
-  return `/api/v1/me/cvs/${cvID}`;
+function cvPath(cvID: string): string {
+  return `/api/v1/me/cvs/${encodeURIComponent(cvID)}`;
 }

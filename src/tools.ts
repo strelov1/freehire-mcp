@@ -216,7 +216,15 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
 
   // CV tailoring — read the fit context, read/patch the CV document, render a PDF.
   // Beta-gated on the server; acts as the authenticated user. Addressed by CV id.
-  const cvId = z.number().int().describe("The CV id (from the tailoring session bootstrap).");
+  // The id is opaque: the API hands it out and the caller passes it back. The schema
+  // deliberately does not describe its format — a client that validates the shape
+  // bakes today's format into a released package, which is what an opaque id avoids.
+  const cvId = z
+    .string()
+    .min(1)
+    .describe(
+      "The CV id, copied from the tailoring workspace URL (/tailor/<job>?cv=<id>) or from a CV listing. Opaque — never construct or guess one.",
+    );
 
   server.registerTool(
     "cv_context",
