@@ -59,7 +59,7 @@ rather than the server failing to start.
 | `my` | The caller's tracked jobs (all/viewed/saved/applied) with stage + note. |
 | `cv_context` | The fit analysis a tailored CV should reframe toward (missing_have vs missing_gap). |
 | `cv_get` | A tailored CV's full document. |
-| `cv_edit` | Apply one field-level `cv.Patch` to a tailored CV (server-validated). |
+| `cv_edit` | Apply a batch of path-addressed edits to a tailored CV, atomically (server-validated; uncited claims are refused). |
 | `cv_render` | Render a tailored CV to a PDF, returned as a base64 `application/pdf` resource. |
 | `submit` | Submit a vacancy for moderation. |
 | `my_submissions` | The caller's submissions with status. |
