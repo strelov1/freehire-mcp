@@ -248,20 +248,45 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
     async ({ id }) => run(() => getClient().getCV(id)),
   );
 
+  // Edits are addressed by a path into the document, the same model the CLI and the web
+  // editor use. Send everything that belongs together in ONE call: the batch is atomic
+  // and lands as a single, individually undoable entry in the candidate's history.
+  const cvOp = z
+    .object({
+      kind: z
+        .enum(["set", "insert", "remove", "move"])
+        .describe("set replaces a node, insert adds one, remove deletes one, move reorders within its list."),
+      path: z
+        .string()
+        .min(1)
+        .describe(
+          "Where to edit, 0-indexed over what cv_get returned: summary, experience[2].bullets[1], experience[0].stack[0], skills[0].items[3], education[1].degree, style.font_size.",
+        ),
+      value: z.unknown().optional().describe("The new content. Omit for remove and move."),
+      to: z.number().int().optional().describe("Destination index. Only for move."),
+      evidence_id: z
+        .string()
+        .optional()
+        .describe("Id of the banked achievement backing this claim. Required for anything stating what the candidate did."),
+    })
+    .describe("One path-addressed operation.");
+
   server.registerTool(
     "cv_edit",
     {
       description:
-        "Apply ONE field-level patch to a tailored CV. `patch` is a cv.Patch object: an `op` plus its address/payload. Ops: set_summary, set_header_field, add_bullet, replace_bullet, remove_bullet, reorder_bullets, set_skill_group, set_stack. The server sanitizes and validates it (a bad patch is a 422). Never fabricate: reframe existing evidence for missing_have requirements; for missing_gap, confirm with the candidate first. Export the finished PDF with `cv_render`.",
+        "Apply a batch of path-addressed edits to a tailored CV, atomically. Read cv_context and cv_get first — indices are counted over the document cv_get returned. THE HONEST WALL: editing with an API key edits as the tailoring agent, and the server enforces it — the candidate's own name, email, phone and links are refused, and anything stating what they DID needs evidence_id, the id of something they asserted themselves. One uncited op rejects the whole batch. For a missing_have requirement, reframe an existing bullet; for a missing_gap, ask the candidate before writing anything. A bad path is a 422 and the CV is untouched. Export with cv_render.",
       inputSchema: {
         id: cvId,
-        patch: z
-          .record(z.unknown())
-          .describe('One cv.Patch object, e.g. {"op":"add_bullet","experience":0,"value":"Cut p99 latency 40%"}.'),
+        ops: z.array(cvOp).min(1).describe("Every edit that belongs together, in one call."),
+        note: z
+          .string()
+          .optional()
+          .describe("Your own one-line reason for the change; shown to the candidate as the agent's words."),
       },
       annotations: { readOnlyHint: false },
     },
-    async ({ id, patch }) => run(() => getClient().patchCV(id, patch)),
+    async ({ id, ops, note }) => run(() => getClient().patchCV(id, ops, note)),
   );
 
   server.registerTool(

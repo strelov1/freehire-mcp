@@ -12,7 +12,7 @@ import { registerTools } from "./tools.js";
 // A recording mock of the freehire API, plus a linked MCP client/server pair so
 // tests can call tools end-to-end and assert what reached the upstream API.
 let api: http.Server;
-let last: { method: string; url: string; auth: string | undefined };
+let last: { method: string; url: string; auth: string | undefined; body: string };
 let apiStatus = 200;
 let apiBody: unknown = { data: null };
 
@@ -22,8 +22,13 @@ beforeEach(async () => {
   apiStatus = 200;
   apiBody = { data: null };
   api = http.createServer((req, res) => {
-    last = { method: req.method ?? "", url: req.url ?? "", auth: req.headers.authorization };
-    req.on("data", () => {});
+    last = { method: req.method ?? "", url: req.url ?? "", auth: req.headers.authorization, body: "" };
+    // The request body is recorded, not discarded: a tool that reaches the right URL
+    // with the wrong body still fails against the real server, and that is exactly
+    // how cv_edit shipped broken.
+    req.on("data", (chunk) => {
+      last.body += chunk;
+    });
     req.on("end", () => {
       res.writeHead(apiStatus, { "Content-Type": "application/json" });
       res.end(JSON.stringify(apiBody));
@@ -101,13 +106,20 @@ describe("registerTools", () => {
     expect(JSON.parse(text)).toEqual({ email: "me@example.com" });
   });
 
-  it("cv_edit PATCHes the CV with the patch body", async () => {
+  it("cv_edit PATCHes the CV with a path-addressed ops batch", async () => {
     apiBody = { data: { id: "3f2a9c14-7b6e-4a58-9d21-8e4c5f0b1a76" } };
-    const patch = { op: "set_summary", value: "Senior backend engineer" };
-    const res = await mcp.callTool({ name: "cv_edit", arguments: { id: "3f2a9c14-7b6e-4a58-9d21-8e4c5f0b1a76", patch } });
+    const ops = [
+      { kind: "set", path: "summary", value: "Senior backend engineer", evidence_id: "atom-9" },
+      { kind: "remove", path: "skills[2]" },
+    ];
+    const res = await mcp.callTool({
+      name: "cv_edit",
+      arguments: { id: "3f2a9c14-7b6e-4a58-9d21-8e4c5f0b1a76", ops, note: "tailored to the role" },
+    });
     expect(res.isError).toBeFalsy();
     expect(last.method).toBe("PATCH");
     expect(last.url).toBe("/api/v1/me/cvs/3f2a9c14-7b6e-4a58-9d21-8e4c5f0b1a76");
+    expect(JSON.parse(last.body)).toEqual({ ops, note: "tailored to the role" });
   });
 
   it("cv_render returns the PDF as a base64 resource", async () => {

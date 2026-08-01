@@ -121,14 +121,24 @@ describe("Client", () => {
     expect(data).toEqual({ id: 7 });
   });
 
-  it("patchCV PATCHes the CV with the patch as the JSON body", async () => {
+  it("patchCV PATCHes the CV with the ops batch the server decodes", async () => {
     handler = () => ({ status: 200, body: { data: { id: 7 } } });
-    const patch = { op: "add_bullet", experience: 0, value: "Led the migration" };
-    await newClient().patchCV(7, patch);
+    const ops = [
+      { kind: "insert", path: "experience[0].bullets[0]", value: "Led the migration", evidence_id: "atom-1" },
+    ];
+    await newClient().patchCV(7, ops, "reframed for the role");
     expect(last.method).toBe("PATCH");
     expect(last.url).toBe("/api/v1/me/cvs/7");
     expect(last.contentType).toBe("application/json");
-    expect(JSON.parse(last.body)).toEqual(patch);
+    // The server decodes strictly (DisallowUnknownFields): the body is {ops, note}
+    // and nothing else. A bare patch object is a 422.
+    expect(JSON.parse(last.body)).toEqual({ ops, note: "reframed for the role" });
+  });
+
+  it("patchCV omits note when none is given, rather than sending an empty one", async () => {
+    handler = () => ({ status: 200, body: { data: { id: 7 } } });
+    await newClient().patchCV(7, [{ kind: "remove", path: "skills[2]" }]);
+    expect(JSON.parse(last.body)).toEqual({ ops: [{ kind: "remove", path: "skills[2]" }] });
   });
 
   it("renderCV GETs the pdf path and returns the raw response bytes", async () => {

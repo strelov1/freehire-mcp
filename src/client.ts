@@ -195,11 +195,19 @@ export class Client {
     return (await this.do("GET", cvPath(cvID))).data;
   }
 
-  /** patchCV applies one field-level patch to a CV (PATCH /me/cvs/:id). patch is a
-   * cv.Patch object (op + address + payload); the server sanitizes and validates it,
-   * so a malformed patch comes back as a 422 ApiError. */
-  async patchCV(cvID: string, patch: unknown): Promise<unknown> {
-    return (await this.do("PATCH", cvPath(cvID), patch)).data;
+  /** patchCV applies a batch of path operations to a CV (PATCH /me/cvs/:id).
+   *
+   * The server decodes the body strictly — unknown fields are rejected — so it has to
+   * be exactly `{ops, note?}`, with each op addressed by a path into the document
+   * (`experience[0].bullets[1]`). Sending a bare patch object is a 422, not a
+   * best-effort apply.
+   *
+   * The whole batch applies or none of it does, and it lands as one entry in the
+   * candidate's revision history, so related edits belong in one call. */
+  async patchCV(cvID: string, ops: unknown[], note?: string): Promise<unknown> {
+    const body: { ops: unknown[]; note?: string } = { ops };
+    if (note) body.note = note;
+    return (await this.do("PATCH", cvPath(cvID), body)).data;
   }
 
   /** renderCV downloads a CV rendered to PDF (GET /me/cvs/:id/pdf). Unlike the other
