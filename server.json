@@ -2,13 +2,25 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "me.freehire/freehire",
   "title": "freehire",
-  "description": "Search 3.3M+ IT jobs from 294K company career boards, track applications, tailor your CV.",
+  "description": "freehire.me: search 3.3M+ IT jobs from 294K company boards, track applications, tailor CVs.",
   "version": "0.4.2",
   "websiteUrl": "https://freehire.me/cli",
   "repository": {
     "url": "https://github.com/strelov1/freehire-mcp",
     "source": "github"
   },
+  "icons": [
+    {
+      "src": "https://freehire.me/favicon.svg",
+      "mimeType": "image/svg+xml",
+      "sizes": ["any"]
+    },
+    {
+      "src": "https://freehire.me/pwa-512x512.png",
+      "mimeType": "image/png",
+      "sizes": ["512x512"]
+    }
+  ],
   "packages": [
     {
       "registryType": "npm",
