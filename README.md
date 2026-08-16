@@ -1,5 +1,7 @@
 # freehire MCP server
 
+[![smithery badge](https://smithery.ai/badge/strelov1/freehire)](https://smithery.ai/servers/strelov1/freehire)
+
 An [MCP](https://modelcontextprotocol.io) server over the [freehire](https://freehire.me)
 job API. It lets any MCP host — Claude Desktop, Claude Code, or a compatible agent —
 **search, filter, and apply to IT jobs** without a browser, authenticating with a
