@@ -3,7 +3,11 @@
 An [MCP](https://modelcontextprotocol.io) server over the [freehire](https://freehire.me)
 job API. It lets any MCP host — Claude Desktop, Claude Code, or a compatible agent —
 **search, filter, and apply to IT jobs** without a browser, authenticating with a
-personal API key. It mirrors the [freehire CLI](https://github.com/strelov1/freehire-cli):
+personal API key. Postings are crawled straight from company career boards — 3.3M+ open
+roles across 294K companies, normalized into one schema and tagged with stack, seniority,
+region and work mode ([live figures](https://freehire.me/open)).
+
+It mirrors the [freehire CLI](https://github.com/strelov1/freehire-cli):
 same API, same credentials, exposed as MCP tools instead of shell commands.
 
 ## Install
