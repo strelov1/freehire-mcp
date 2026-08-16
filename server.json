@@ -1,0 +1,52 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "me.freehire/freehire",
+  "title": "freehire",
+  "description": "freehire.me: search 3.3M+ IT jobs from 294K company boards, track applications, tailor CVs.",
+  "version": "0.4.2",
+  "websiteUrl": "https://freehire.me/cli",
+  "repository": {
+    "url": "https://github.com/strelov1/freehire-mcp",
+    "source": "github"
+  },
+  "icons": [
+    {
+      "src": "https://freehire.me/favicon.svg",
+      "mimeType": "image/svg+xml",
+      "sizes": ["any"]
+    },
+    {
+      "src": "https://freehire.me/pwa-512x512.png",
+      "mimeType": "image/png",
+      "sizes": ["512x512"]
+    }
+  ],
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "freehire-mcp",
+      "version": "0.4.2",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "FREEHIRE_TOKEN",
+          "description": "A freehire personal API key (freehire.me -> account menu -> API keys). Optional: if omitted, the server reads the key the freehire CLI stored in ~/.freehire/creds.json.",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string",
+          "placeholder": "fhk_xxxxxxxx"
+        },
+        {
+          "name": "FREEHIRE_API_URL",
+          "description": "Override the API base URL. Defaults to https://freehire.me.",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string",
+          "default": "https://freehire.me"
+        }
+      ]
+    }
+  ]
+}

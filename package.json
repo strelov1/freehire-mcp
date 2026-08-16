@@ -1,7 +1,8 @@
 {
   "name": "freehire-mcp",
-  "version": "0.4.1",
-  "description": "MCP server over the freehire job API — search, filter, and apply to IT jobs from any MCP host.",
+  "version": "0.4.2",
+  "mcpName": "me.freehire/freehire",
+  "description": "freehire.me: search 3.3M+ IT jobs from 294K company boards, track applications, tailor CVs.",
   "type": "module",
   "bin": {
     "freehire-mcp": "dist/index.js"
@@ -16,6 +17,7 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "vitest run",
+    "build:mcpb": "node scripts/build-mcpb.mjs",
     "prepublishOnly": "npm run build"
   },
   "keywords": [

@@ -1,0 +1,61 @@
+{
+  "manifest_version": "0.3",
+  "name": "freehire",
+  "display_name": "freehire.me",
+  "long_description": "An MCP server over [freehire.me](https://freehire.me), an open-source IT job aggregator that crawls postings straight from company career boards — 3.3M+ open roles across 294K companies, normalized into one schema and tagged with stack, seniority, region and work mode.\n\nSearch and filter the live market, score a skill list against real demand, read a posting in full, apply, track application stages, and tailor a CV against a specific job. Search results carry each posting's full description as markdown, so a host can screen a result set without a follow-up call per hit.\n\nAuthentication uses a personal API key from freehire.me. If you already use the freehire.me CLI, the server reads the key it stored and no configuration is needed.",
+  "author": {
+    "name": "strelov1",
+    "url": "https://freehire.me"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/strelov1/freehire-mcp"
+  },
+  "homepage": "https://freehire.me/cli",
+  "documentation": "https://github.com/strelov1/freehire-mcp#readme",
+  "support": "https://github.com/strelov1/freehire-mcp/issues",
+  "icon": "icon.png",
+  "license": "MIT",
+  "keywords": [
+    "jobs",
+    "job-search",
+    "hiring",
+    "ats",
+    "career",
+    "cv",
+    "resume"
+  ],
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/server/index.js"
+      ],
+      "env": {
+        "FREEHIRE_TOKEN": "${user_config.freehire_token}"
+      }
+    }
+  },
+  "user_config": {
+    "freehire_token": {
+      "type": "string",
+      "title": "freehire.me API key",
+      "description": "Create one at freehire.me under the account menu -> API keys. Leave blank if the freehire.me CLI already stored a key in ~/.freehire/creds.json — the server reads that.",
+      "sensitive": true,
+      "required": false
+    }
+  },
+  "compatibility": {
+    "platforms": [
+      "darwin",
+      "win32",
+      "linux"
+    ],
+    "runtimes": {
+      "node": ">=18.0.0"
+    }
+  },
+  "tools_generated": true
+}
