@@ -17,6 +17,7 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "vitest run",
+    "build:mcpb": "node scripts/build-mcpb.mjs",
     "prepublishOnly": "npm run build"
   },
   "keywords": [

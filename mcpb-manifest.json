@@ -1,0 +1,154 @@
+{
+  "manifest_version": "0.3",
+  "name": "freehire",
+  "display_name": "freehire.me",
+  "long_description": "An MCP server over [freehire.me](https://freehire.me), an open-source IT job aggregator that crawls postings straight from company career boards — 3.3M+ open roles across 294K companies, normalized into one schema and tagged with stack, seniority, region and work mode.\n\nSearch and filter the live market, score a skill list against real demand, read a posting in full, apply, track application stages, and tailor a CV against a specific job. Search results carry each posting's full description as markdown, so a host can screen a result set without a follow-up call per hit.\n\nAuthentication uses a personal API key from freehire.me. If you already use the freehire.me CLI, the server reads the key it stored and no configuration is needed.",
+  "author": {
+    "name": "strelov1",
+    "url": "https://freehire.me"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/strelov1/freehire-mcp"
+  },
+  "homepage": "https://freehire.me/cli",
+  "documentation": "https://github.com/strelov1/freehire-mcp#readme",
+  "support": "https://github.com/strelov1/freehire-mcp/issues",
+  "icon": "icon.png",
+  "license": "MIT",
+  "keywords": [
+    "jobs",
+    "job-search",
+    "hiring",
+    "ats",
+    "career",
+    "cv",
+    "resume"
+  ],
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/server/index.js"
+      ],
+      "env": {
+        "FREEHIRE_TOKEN": "${user_config.freehire_token}"
+      }
+    }
+  },
+  "user_config": {
+    "freehire_token": {
+      "type": "string",
+      "title": "freehire.me API key",
+      "description": "Create one at freehire.me under the account menu -> API keys. Leave blank if the freehire.me CLI already stored a key in ~/.freehire/creds.json — the server reads that.",
+      "sensitive": true,
+      "required": false
+    }
+  },
+  "tools": [
+    {
+      "name": "whoami",
+      "description": "The authenticated user, to verify the key."
+    },
+    {
+      "name": "facets",
+      "description": "The filter and skill vocabulary: every facet's live values with counts. Call first."
+    },
+    {
+      "name": "search",
+      "description": "Keyword and facet job search; returns jobs with their full description as markdown."
+    },
+    {
+      "name": "market_fit",
+      "description": "Score a skill list against live market demand: coverage and gaps."
+    },
+    {
+      "name": "job",
+      "description": "A single job's full content by slug."
+    },
+    {
+      "name": "company",
+      "description": "A company and its open jobs by slug."
+    },
+    {
+      "name": "apply",
+      "description": "Mark a job applied."
+    },
+    {
+      "name": "save",
+      "description": "Bookmark a job."
+    },
+    {
+      "name": "unsave",
+      "description": "Remove a bookmark."
+    },
+    {
+      "name": "stage",
+      "description": "Set the application stage."
+    },
+    {
+      "name": "note",
+      "description": "Attach a free-text note to a tracked job."
+    },
+    {
+      "name": "my",
+      "description": "The caller's tracked jobs with stage and note."
+    },
+    {
+      "name": "cv_context",
+      "description": "The fit analysis a tailored CV should reframe toward."
+    },
+    {
+      "name": "cv_get",
+      "description": "A tailored CV's full document."
+    },
+    {
+      "name": "cv_edit",
+      "description": "Apply path-addressed edits to a tailored CV, atomically."
+    },
+    {
+      "name": "cv_render",
+      "description": "Render a tailored CV to PDF."
+    },
+    {
+      "name": "submit",
+      "description": "Submit a vacancy for moderation."
+    },
+    {
+      "name": "my_submissions",
+      "description": "The caller's submissions with status."
+    },
+    {
+      "name": "jobs_add",
+      "description": "Moderator: author a job."
+    },
+    {
+      "name": "jobs_edit",
+      "description": "Moderator: edit a job."
+    },
+    {
+      "name": "submissions_pending",
+      "description": "Moderator: the review queue."
+    },
+    {
+      "name": "submission_approve",
+      "description": "Moderator: approve a submission."
+    },
+    {
+      "name": "submission_reject",
+      "description": "Moderator: reject a submission."
+    }
+  ],
+  "compatibility": {
+    "platforms": [
+      "darwin",
+      "win32",
+      "linux"
+    ],
+    "runtimes": {
+      "node": ">=18.0.0"
+    }
+  }
+}
