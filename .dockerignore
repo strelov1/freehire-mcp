@@ -1,0 +1,8 @@
+node_modules
+dist
+.git
+*.mcpb
+.mcpb-build
+assets
+scripts
+*.log
