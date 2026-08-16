@@ -47,100 +47,6 @@
       "required": false
     }
   },
-  "tools": [
-    {
-      "name": "whoami",
-      "description": "The authenticated user, to verify the key."
-    },
-    {
-      "name": "facets",
-      "description": "The filter and skill vocabulary: every facet's live values with counts. Call first."
-    },
-    {
-      "name": "search",
-      "description": "Keyword and facet job search; returns jobs with their full description as markdown."
-    },
-    {
-      "name": "market_fit",
-      "description": "Score a skill list against live market demand: coverage and gaps."
-    },
-    {
-      "name": "job",
-      "description": "A single job's full content by slug."
-    },
-    {
-      "name": "company",
-      "description": "A company and its open jobs by slug."
-    },
-    {
-      "name": "apply",
-      "description": "Mark a job applied."
-    },
-    {
-      "name": "save",
-      "description": "Bookmark a job."
-    },
-    {
-      "name": "unsave",
-      "description": "Remove a bookmark."
-    },
-    {
-      "name": "stage",
-      "description": "Set the application stage."
-    },
-    {
-      "name": "note",
-      "description": "Attach a free-text note to a tracked job."
-    },
-    {
-      "name": "my",
-      "description": "The caller's tracked jobs with stage and note."
-    },
-    {
-      "name": "cv_context",
-      "description": "The fit analysis a tailored CV should reframe toward."
-    },
-    {
-      "name": "cv_get",
-      "description": "A tailored CV's full document."
-    },
-    {
-      "name": "cv_edit",
-      "description": "Apply path-addressed edits to a tailored CV, atomically."
-    },
-    {
-      "name": "cv_render",
-      "description": "Render a tailored CV to PDF."
-    },
-    {
-      "name": "submit",
-      "description": "Submit a vacancy for moderation."
-    },
-    {
-      "name": "my_submissions",
-      "description": "The caller's submissions with status."
-    },
-    {
-      "name": "jobs_add",
-      "description": "Moderator: author a job."
-    },
-    {
-      "name": "jobs_edit",
-      "description": "Moderator: edit a job."
-    },
-    {
-      "name": "submissions_pending",
-      "description": "Moderator: the review queue."
-    },
-    {
-      "name": "submission_approve",
-      "description": "Moderator: approve a submission."
-    },
-    {
-      "name": "submission_reject",
-      "description": "Moderator: reject a submission."
-    }
-  ],
   "compatibility": {
     "platforms": [
       "darwin",
@@ -150,5 +56,6 @@
     "runtimes": {
       "node": ">=18.0.0"
     }
-  }
+  },
+  "tools_generated": true
 }
