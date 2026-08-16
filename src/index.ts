@@ -10,6 +10,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { Client } from "./client.js";
 import { resolveConfig } from "./config.js";
 import { registerTools } from "./tools.js";
+import { VERSION } from "./version.js";
 
 /** makeClientResolver returns a getClient that resolves the config once and caches
  * the client. It resolves lazily (on first tool call, not at launch) so a missing
@@ -27,7 +28,7 @@ function makeClientResolver(): () => Client {
 
 async function main(): Promise<void> {
   const server = new McpServer(
-    { name: "freehire", version: "0.1.0" },
+    { name: "freehire", version: VERSION },
     {
       instructions:
         "Tools over the freehire job API. Start with `facets` to discover real filter values and skill slugs, " +
