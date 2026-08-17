@@ -101,8 +101,9 @@ export class Client {
     // it cannot act on.
     params.set("description_format", "markdown");
     const env = await this.do("GET", `/api/v1/agent/jobs/search?${params.toString()}`);
-    const ignored = env.meta?.ignored_params;
-    return { data: env.data, total: env.meta?.total ?? 0, ...(ignored?.length ? { ignored } : {}) };
+    const page: Page = { data: env.data, total: env.meta?.total ?? 0 };
+    if (env.meta?.ignored_params?.length) page.ignored = env.meta.ignored_params;
+    return page;
   }
 
   /** coverage scores a skill list against the facet-filtered market
