@@ -81,10 +81,22 @@ rather than the server failing to start.
 
 **Filters.** `search`, `market_fit`, and `facets` share the same market-filter
 parameters: `remote`, `region`, `country`, `city`, `company`, `category`, `role`,
-`seniority`, `employment_type`, `english_level`, `salary_min`, `visa`, plus a generic
-`facets` map (`{"source": "greenhouse"}`) for any other facet in the vocabulary.
-Discover valid values with the `facets` tool — do not invent them. In `search`, `skills`
-is a filter; in `market_fit`, `skills` is the measured set.
+`seniority`, `employment_type`, `english_level`, `exclude_skill`, `salary_min`, `visa`,
+plus a generic `facets` map (`{"source": "greenhouse"}`) for any other facet in the
+vocabulary. Discover valid values with the `facets` tool — do not invent them. In
+`search`, `skills` is a filter; in `market_fit`, `skills` is the measured set.
+
+**Geography widens.** `region`, `country` and `city` are ONE OR-group: `region: ["eu"]`
+with `country: ["IT"]` means "in Europe **or** in Italy" and returns everything the
+region alone would. To search a single country, pass `country` and omit `region`. The
+combination is for genuinely disjoint reach ("Europe or Brazil") — intersecting a region
+with a country inside it would always be empty, so that is not what these do.
+
+**Unread params are ignored, not refused.** A filter key the API does not recognize
+does not fail the request, it widens it. Such keys come back in the result's `ignored`
+list, with `did_you_mean` when only the grammatical number was wrong. A `total` from a
+response carrying `ignored` answers a broader question than the one asked — retry with
+the suggested name before reporting it.
 
 **Descriptions.** `search` reads the API's agent endpoint, so every hit already carries
 the posting's full description rendered as markdown — a host can screen a result set

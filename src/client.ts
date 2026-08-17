@@ -14,17 +14,31 @@ export class ApiError extends Error {
   }
 }
 
-/** Page is a slice of list results: the raw `data` array plus the total match
- * count from `meta`. Returned by search and myJobs. */
+/** IgnoredParam is a query param the API did not read. `did_you_mean` carries the
+ * real facet name when the sent one was only its singular. */
+export interface IgnoredParam {
+  param: string;
+  did_you_mean?: string;
+}
+
+/** Page is a slice of list results: the raw `data` array, the total match count
+ * from `meta`, and any params the API ignored.
+ *
+ * `ignored` rides in the tool result rather than a log line: an unread filter
+ * widens the search instead of failing it, so the count comes back larger and
+ * reads as a real answer. The host model only ever sees the payload, so a warning
+ * anywhere else is a warning nobody receives. Absent when clean, so an ordinary
+ * result carries no field readers learn to skip. */
 export interface Page {
   data: unknown;
   total: number;
+  ignored?: IgnoredParam[];
 }
 
 /** envelope is the shared API response wrapper: {data, meta, error}. */
 interface Envelope {
   data?: unknown;
-  meta?: { total?: number };
+  meta?: { total?: number; ignored_params?: IgnoredParam[] };
   error?: string;
 }
 
@@ -80,11 +94,15 @@ export class Client {
     params.set("q", query);
     params.set("limit", String(limit));
     params.set("offset", String(offset));
-    params.set("semantic_ratio", "0"); // keyword search, matching the web client
-    params.set("include_description", "true");
+    // The endpoint always returns full descriptions, so only the rendering needs
+    // asking for. It used to also send semantic_ratio=0 and include_description=true;
+    // the first died with the hybrid index and the second was never read, and the API
+    // now reports unread params as warnings — so sending them would hand the model two
+    // it cannot act on.
     params.set("description_format", "markdown");
     const env = await this.do("GET", `/api/v1/agent/jobs/search?${params.toString()}`);
-    return { data: env.data, total: env.meta?.total ?? 0 };
+    const ignored = env.meta?.ignored_params;
+    return { data: env.data, total: env.meta?.total ?? 0, ...(ignored?.length ? { ignored } : {}) };
   }
 
   /** coverage scores a skill list against the facet-filtered market
