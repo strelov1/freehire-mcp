@@ -63,10 +63,16 @@ rather than the server failing to start.
 | `stage` | Set the application stage (server-validated). |
 | `note` | Attach a free-text note. |
 | `my` | The caller's tracked jobs (all/viewed/saved/applied) with stage + note. |
+| `cv_tailor` | Start (or reopen) tailoring for a vacancy; returns the CV id the other `cv_*` tools take. |
+| `cv_list` | The caller's tailored CVs with the vacancy each was written for. |
 | `cv_context` | The fit analysis a tailored CV should reframe toward (missing_have vs missing_gap). |
 | `cv_get` | A tailored CV's full document. |
 | `cv_edit` | Apply a batch of path-addressed edits to a tailored CV, atomically (server-validated; uncited claims are refused). |
 | `cv_render` | Render a tailored CV to a PDF, returned as a base64 `application/pdf` resource. |
+| `experience_list` | The candidate's experience bank, with each achievement's **provenance**. `cv_edit`'s `evidence_id` comes from here. |
+| `experience_add_employment` / `experience_add_achievement` | Record a place, or one piece of evidence. |
+| `experience_update_employment` / `experience_update_achievement` | Correct one. Field-level: what you do not name is kept. |
+| `experience_remove_employment` / `experience_remove_achievement` | Delete one. No undo; a place must be empty first. |
 | `submit` | Submit a vacancy for moderation. |
 | `my_submissions` | The caller's submissions with status. |
 | `jobs_add` / `jobs_edit` | Moderator: author / edit a job (403 without the role). |
@@ -83,6 +89,20 @@ is a filter; in `market_fit`, `skills` is the measured set.
 **Descriptions.** `search` reads the API's agent endpoint, so every hit already carries
 the posting's full description rendered as markdown — a host can screen a result set
 without a `job` call per hit. Descriptions are long, so keep `limit` modest.
+
+**The evidence rule.** Every achievement in the bank records who asserted it.
+`cv_import`, `stated_in_chat` and `manual` mean the candidate did, and may be cited on a
+CV; `agent_inferred` means a model read it into the record, and may not. `cv_edit`
+refuses any claim about the candidate without an `evidence_id` pointing at a citable one,
+which is why `experience_list` is the tool that makes `cv_edit` usable at all.
+
+Correcting an achievement does not move that label: an `agent_inferred` one stays
+uncitable however it is reworded. The only way it becomes citable is to ask the
+candidate, then record what **they** say with `experience_add_achievement`.
+
+**Removing is final** — the bank has no undo. A place must be emptied before it can go,
+because deleting one would take every achievement under it. Folding two achievements into
+one, keeping the numbers from both, is on the site.
 
 Each tool returns the raw API `data` as JSON text; an API error becomes an `isError`
 result carrying the HTTP status (a 401 adds an auth hint).

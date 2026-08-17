@@ -176,3 +176,87 @@ describe("Client", () => {
     expect(err.message).toContain("404");
   });
 });
+
+// The experience bank. The updates carry the real risk here: the API replaces the whole
+// row, so a client that passed the caller's fields straight through would delete
+// everything they did not name.
+describe("Client — experience bank", () => {
+  const BANK = {
+    employments: [
+      {
+        id: "emp-1",
+        kind: "job",
+        company: "Acme",
+        role: "SWE",
+        start: "Mar 2021",
+        atoms: [
+          {
+            id: "atom-1",
+            claim: "Cut latency 20s to 1s",
+            context: "the checkout path",
+            metrics: ["20s->1s"],
+            skills: ["go", "kubernetes"],
+          },
+        ],
+      },
+    ],
+    unplaced: [{ id: "atom-loose", claim: "Something unplaced", skills: ["rust"] }],
+  };
+
+  // Two requests: the read that finds the row, then the replace. Only the second is asserted.
+  function bankThen(status: number, body: unknown) {
+    let n = 0;
+    handler = () => (n++ === 0 ? { status: 200, body: { data: BANK } } : { status, body });
+  }
+
+  it("updateAchievement keeps the fields the caller did not name", async () => {
+    bankThen(200, { data: { id: "atom-1" } });
+    await newClient().updateAchievement("atom-1", { claim: "Cut p99 20s to 900ms" });
+    expect(last.method).toBe("PUT");
+    expect(last.url).toBe("/api/v1/me/experience/atoms/atom-1");
+    const sent = JSON.parse(last.body) as Record<string, unknown>;
+    expect(sent.claim).toBe("Cut p99 20s to 900ms");
+    expect(sent.context).toBe("the checkout path");
+    expect(sent.metrics).toEqual(["20s->1s"]);
+    expect(sent.skills).toEqual(["go", "kubernetes"]);
+    // The grouping is what says where an achievement lives, so the id comes from the group.
+    expect(sent.employment_id).toBe("emp-1");
+  });
+
+  it("updateAchievement replaces a list outright when one is given", async () => {
+    bankThen(200, { data: { id: "atom-1" } });
+    await newClient().updateAchievement("atom-1", { skills: ["go"] });
+    const sent = JSON.parse(last.body) as Record<string, unknown>;
+    expect(sent.skills).toEqual(["go"]);
+    expect(sent.claim).toBe("Cut latency 20s to 1s");
+  });
+
+  it("updateEmployment keeps the rest of the row", async () => {
+    bankThen(200, { data: { id: "emp-1" } });
+    await newClient().updateEmployment("emp-1", { end: "Dec 2025" });
+    const sent = JSON.parse(last.body) as Record<string, unknown>;
+    expect(sent.end).toBe("Dec 2025");
+    expect(sent.company).toBe("Acme");
+    expect(sent.role).toBe("SWE");
+    expect(sent.start).toBe("Mar 2021");
+  });
+
+  it("an unknown id fails before any write", async () => {
+    handler = () => ({ status: 200, body: { data: BANK } });
+    await expect(newClient().updateAchievement("nope", { claim: "x" })).rejects.toThrow(/experience_list/);
+    expect(last.method).toBe("GET");
+  });
+
+  it("tailorCV posts the slug", async () => {
+    handler = () => ({ status: 201, body: { data: { tailor_cv_id: "cv-1" } } });
+    await newClient().tailorCV("go-dev-acme");
+    expect(last.method).toBe("POST");
+    expect(last.url).toBe("/api/v1/me/cvs/tailor");
+    expect(JSON.parse(last.body)).toEqual({ job_slug: "go-dev-acme" });
+  });
+
+  it("removeEmployment surfaces the server's refusal to cascade", async () => {
+    handler = () => ({ status: 409, body: { error: "this place still holds 3 achievement(s)" } });
+    await expect(newClient().removeEmployment("emp-1")).rejects.toThrow(/still holds 3/);
+  });
+});

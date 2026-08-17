@@ -223,8 +223,32 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
     .string()
     .min(1)
     .describe(
-      "The CV id, copied from the tailoring workspace URL (/tailor/<job>?cv=<id>) or from a CV listing. Opaque — never construct or guess one.",
+      "The CV id, from cv_tailor or cv_list (or the tailoring workspace URL /tailor/<job>?cv=<id>). Opaque — never construct or guess one.",
     );
+
+  // The two entry points. Every other CV tool takes an id, so without these the cycle can
+  // be driven but not started.
+  server.registerTool(
+    "cv_list",
+    {
+      description:
+        "List the caller's tailored CVs, newest edit first, each with the vacancy it was written for. Use this to find the id the other cv_* tools take, or to check whether a vacancy already has a tailored copy.",
+      inputSchema: {},
+      annotations: { readOnlyHint: true },
+    },
+    async () => run(() => getClient().listCVs()),
+  );
+
+  server.registerTool(
+    "cv_tailor",
+    {
+      description:
+        "Start tailoring a CV to a vacancy, returning the tailored CV's id (plus the base it was copied from and the bound session). Idempotent per vacancy — calling it again for the same slug reopens the copy that already exists, so it is safe when you do not know whether one exists. It spends one of the candidate's AI credits the first time it creates the copy (402 when the balance will not cover it) and 409s when they have no résumé on the site to seed a base CV from — tell them to upload one; you cannot. It does not call a model: the reframing is your work, through cv_context and cv_edit.",
+      inputSchema: { job_slug: slug },
+      annotations: { readOnlyHint: false },
+    },
+    async ({ job_slug }) => run(() => getClient().tailorCV(job_slug)),
+  );
 
   server.registerTool(
     "cv_context",
@@ -316,6 +340,120 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
         return fail(err);
       }
     },
+  );
+
+  // The experience bank is the durable record of what the candidate has actually done, and
+  // it is what cv_edit's evidence_id points into. Without these tools the honest wall has
+  // no key: every claim about the candidate needs a citation and there would be no way to
+  // obtain one.
+  const employmentId = z
+    .string()
+    .min(1)
+    .describe("The employment id, from experience_list. Opaque — read it, never construct one.");
+  const achievementId = z
+    .string()
+    .min(1)
+    .describe("The achievement id, from experience_list. This is also cv_edit's evidence_id.");
+
+  server.registerTool(
+    "experience_list",
+    {
+      description:
+        "Read the candidate's whole experience bank: every employment and the achievements attached to it, plus the ones attached to no place under `unplaced`. Each achievement carries a PROVENANCE — cv_import, stated_in_chat and manual mean the candidate asserted it and it may be cited on a CV; agent_inferred means a model read it into the record and it may NOT. Take evidence_id for cv_edit from here.",
+      inputSchema: {},
+      annotations: { readOnlyHint: true },
+    },
+    async () => run(() => getClient().listExperience()),
+  );
+
+  const employmentShape = {
+    kind: z.enum(["job", "project"]).optional().describe('"job" or "project"; defaults to job on create.'),
+    company: z.string().optional().describe("Company name, or the project's name."),
+    role: z.string().optional().describe("The candidate's title or role there."),
+    location: z.string().optional().describe("Free-text location."),
+    start: z.string().optional().describe('A free-form date as it would be printed, e.g. "Mar 2021".'),
+    end: z.string().optional().describe("Same format as start; omit while ongoing."),
+    current: z.boolean().optional().describe("True while the candidate is still there."),
+    summary: z.string().optional().describe("One line about the place, for context."),
+  };
+
+  server.registerTool(
+    "experience_add_employment",
+    {
+      description:
+        "Record a place where evidence was produced — a job or a side project. At least company or role is required. Use the returned id to attach achievements with experience_add_achievement.",
+      inputSchema: employmentShape,
+      annotations: { readOnlyHint: false },
+    },
+    async (input) => run(() => getClient().addEmployment(input)),
+  );
+
+  server.registerTool(
+    "experience_add_achievement",
+    {
+      description:
+        "Record one piece of evidence — the sentence a CV bullet would carry. Only record what the CANDIDATE told you; the server stamps anything created here `manual`, which means they asserted it, and that stamp is what lets it be cited on a CV. A claim already in the bank, under any spelling, is refused as 409 rather than duplicated — so correct the existing one with experience_update_achievement instead of re-adding it.",
+      inputSchema: {
+        claim: z.string().min(1).describe("The achievement as one CV-bullet-grade sentence."),
+        context: z.string().optional().describe("How it was done, in a sentence or two."),
+        metrics: z.array(z.string()).optional().describe('Numbers as stated, e.g. ["20s->1s"].'),
+        skills: z.array(z.string()).optional().describe('Canonical skill slugs, e.g. ["go", "kubernetes"].'),
+        employment_id: employmentId.optional().describe("The place this belongs to; omit to leave it unplaced."),
+      },
+      annotations: { readOnlyHint: false },
+    },
+    async (input) => run(() => getClient().addAchievement(input)),
+  );
+
+  server.registerTool(
+    "experience_update_employment",
+    {
+      description:
+        "Correct a place already in the bank. Only the fields you pass change — everything else is carried over from what is banked, because the API replaces the whole row. Use this to fix a name, a role, or dates.",
+      inputSchema: { id: employmentId, ...employmentShape },
+      annotations: { readOnlyHint: false },
+    },
+    async ({ id, ...changes }) => run(() => getClient().updateEmployment(id, changes)),
+  );
+
+  server.registerTool(
+    "experience_update_achievement",
+    {
+      description:
+        "Correct an achievement already in the bank — most often a typo in the claim, which cannot be fixed by re-adding it. Only the fields you pass change; metrics and skills REPLACE the whole list when given. Correcting does NOT change who is held to have said it: an agent_inferred achievement stays agent_inferred and stays uncitable on a CV. Confirming it with the candidate then recording what THEY said is the only way it becomes citable.",
+      inputSchema: {
+        id: achievementId,
+        claim: z.string().optional().describe("The corrected sentence."),
+        context: z.string().optional().describe("How it was done."),
+        metrics: z.array(z.string()).optional().describe("Replaces the whole metrics list."),
+        skills: z.array(z.string()).optional().describe("Replaces the whole skills list."),
+        employment_id: employmentId.optional().describe("Move it to this place."),
+      },
+      annotations: { readOnlyHint: false },
+    },
+    async ({ id, ...changes }) => run(() => getClient().updateAchievement(id, changes)),
+  );
+
+  server.registerTool(
+    "experience_remove_achievement",
+    {
+      description:
+        "Delete one achievement from the bank. There is no undo, so confirm with the candidate first — read it back to them and remove it only on a clear yes. It takes nothing else with it. This is how a duplicate goes: keep the richer entry, remove the other.",
+      inputSchema: { id: achievementId },
+      annotations: { readOnlyHint: false, destructiveHint: true },
+    },
+    async ({ id }) => run(() => getClient().removeAchievement(id)),
+  );
+
+  server.registerTool(
+    "experience_remove_employment",
+    {
+      description:
+        "Delete a place from the bank. It must hold no achievements — removing a place would delete everything recorded under it, and the server refuses that here (409). To retire a duplicate place, move its achievements to the one being kept with experience_update_achievement, then remove the empty shell. There is no undo; confirm with the candidate first.",
+      inputSchema: { id: employmentId },
+      annotations: { readOnlyHint: false, destructiveHint: true },
+    },
+    async ({ id }) => run(() => getClient().removeEmployment(id)),
   );
 
   server.registerTool(

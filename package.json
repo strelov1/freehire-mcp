@@ -1,6 +1,6 @@
 {
   "name": "freehire-mcp",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "mcpName": "me.freehire/freehire",
   "description": "freehire.me: search 3.3M+ IT jobs from 294K company boards, track applications, tailor CVs.",
   "type": "module",

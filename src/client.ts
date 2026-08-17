@@ -183,6 +183,25 @@ export class Client {
   // CV-tailoring endpoints (beta-gated on the server), acting as the authenticated
   // user. Mirrors the freehire CLI's `cv` command group.
 
+  /** listCVs returns the caller's tailored CVs, newest edit first, each with the vacancy
+   * it was written for (GET /me/cvs). This is where a CV id comes from: every other CV
+   * method takes one, and the id is opaque, so it has to be read rather than constructed. */
+  async listCVs(): Promise<unknown> {
+    return (await this.do("GET", "/api/v1/me/cvs")).data;
+  }
+
+  /** tailorCV starts (or reopens) tailoring for a vacancy and returns the tailored CV's
+   * id, the base it was copied from, and the bound agent session (POST /me/cvs/tailor).
+   *
+   * Idempotent per vacancy: calling it again for the same slug returns the copy that
+   * already exists rather than making a second one, so it is safe to call when you do not
+   * know whether one exists. It debits an AI credit the first time it creates the copy
+   * (402 when the balance will not cover it) and 409s when the candidate has no résumé to
+   * seed a base CV from. It never calls a model itself. */
+  async tailorCV(jobSlug: string): Promise<unknown> {
+    return (await this.do("POST", "/api/v1/me/cvs/tailor", { job_slug: jobSlug })).data;
+  }
+
   /** tailorCVContext returns the cached fit-analysis context a tailored CV should
    * reframe toward — verdict, recommendation, and the missing_have / missing_gap
    * requirement split (GET /me/cvs/:id/tailor-context). */
@@ -230,6 +249,110 @@ export class Client {
     return buf;
   }
 
+  /** listExperience returns the caller's whole bank, grouped by employment
+   * (GET /me/experience). Achievements attached to no place come back under `unplaced`.
+   *
+   * This is where an `evidence_id` for patchCV comes from — without it the honest wall
+   * has no key, since every claim about the candidate has to cite a banked achievement. */
+  async listExperience(): Promise<unknown> {
+    return (await this.do("GET", "/api/v1/me/experience")).data;
+  }
+
+  /** addEmployment records a place evidence was produced — a job or a project
+   * (POST /me/experience/employments). */
+  async addEmployment(params: EmploymentFields): Promise<unknown> {
+    return (await this.do("POST", "/api/v1/me/experience/employments", params)).data;
+  }
+
+  /** addAchievement records one piece of evidence (POST /me/experience/atoms).
+   *
+   * Provenance is not a parameter: the server stamps a POST-created achievement `manual`
+   * whatever is sent, because there is no transcript behind a plain HTTP call to check a
+   * stronger claim against. A claim already in the bank, under any spelling, comes back
+   * as 409 rather than a duplicate row — which is why correcting one matters. */
+  async addAchievement(params: AchievementFields): Promise<unknown> {
+    return (await this.do("POST", "/api/v1/me/experience/atoms", params)).data;
+  }
+
+  /** updateEmployment corrects a banked place (PUT /me/experience/employments/:id).
+   *
+   * The API REPLACES the whole row, so this reads the bank first and sends it back with
+   * only the named fields changed. Passing the caller's fields straight through would
+   * write empty over everything they did not mention. */
+  async updateEmployment(id: string, changes: Partial<EmploymentFields>): Promise<unknown> {
+    const current = await this.findEmployment(id);
+    const body: EmploymentFields = { ...current, ...definedOnly(changes) };
+    return (await this.do("PUT", `/api/v1/me/experience/employments/${encodeURIComponent(id)}`, body)).data;
+  }
+
+  /** updateAchievement corrects a banked achievement (PUT /me/experience/atoms/:id), with
+   * the same read-then-replace care as updateEmployment — a claim-only fix must not delete
+   * the metrics and skills that made the achievement worth citing.
+   *
+   * A keyed correction does NOT move the claim's provenance: the server keeps whatever the
+   * row already carried, so an agent cannot promote its own inference into something
+   * citable on a CV. Only the candidate's own edit on the site stamps `manual`. */
+  async updateAchievement(id: string, changes: Partial<AchievementFields>): Promise<unknown> {
+    const current = await this.findAchievement(id);
+    const body: AchievementFields = { ...current, ...definedOnly(changes) };
+    return (await this.do("PUT", `/api/v1/me/experience/atoms/${encodeURIComponent(id)}`, body)).data;
+  }
+
+  /** removeAchievement deletes one owned achievement (DELETE /me/experience/atoms/:id).
+   * It takes nothing else with it, and there is no undo. */
+  async removeAchievement(id: string): Promise<unknown> {
+    await this.do("DELETE", `/api/v1/me/experience/atoms/${encodeURIComponent(id)}`);
+    return { removed: id };
+  }
+
+  /** removeEmployment deletes one owned place (DELETE /me/experience/employments/:id).
+   *
+   * The server refuses this with 409 while achievements still hang off the place, because
+   * the row's foreign key cascades and would delete them too. Move them with
+   * updateAchievement first, then remove the empty place. */
+  async removeEmployment(id: string): Promise<unknown> {
+    await this.do("DELETE", `/api/v1/me/experience/employments/${encodeURIComponent(id)}`);
+    return { removed: id };
+  }
+
+  /** findEmployment reads one banked place, so an update can replace the row without
+   * losing what the caller did not name. A missing id fails here rather than being sent
+   * as a write the server would refuse anyway. */
+  private async findEmployment(id: string): Promise<EmploymentFields> {
+    const bank = (await this.listExperience()) as BankResponse;
+    const found = (bank?.employments ?? []).find((e) => e.id === id);
+    if (!found) {
+      throw new ApiError(404, `no employment ${id} in your bank — read experience_list for the ids`);
+    }
+    return {
+      kind: found.kind,
+      // A project's label is served under `name`; a job's under `company`. Both map to the
+      // same stored field, and the server picks by kind on the way back in.
+      company: found.company ?? found.name,
+      role: found.role,
+      location: found.location,
+      start: found.start,
+      end: found.end,
+      current: found.current,
+      summary: found.summary,
+      stack: found.stack,
+      link: found.link,
+    };
+  }
+
+  private async findAchievement(id: string): Promise<AchievementFields> {
+    const bank = (await this.listExperience()) as BankResponse;
+    for (const e of bank?.employments ?? []) {
+      const hit = (e.atoms ?? []).find((a) => a.id === id);
+      // The grouping is the authority on which place an achievement belongs to, so the
+      // employment id comes from the group rather than the row.
+      if (hit) return { ...achievementFields(hit), employment_id: e.id };
+    }
+    const loose = (bank?.unplaced ?? []).find((a) => a.id === id);
+    if (loose) return achievementFields(loose);
+    throw new ApiError(404, `no achievement ${id} in your bank — read experience_list for the ids`);
+  }
+
   private async do(method: string, path: string, body?: unknown): Promise<Envelope> {
     const headers: Record<string, string> = {
       Authorization: `Bearer ${this.token}`,
@@ -268,4 +391,50 @@ function withQuery(path: string, params: URLSearchParams): string {
 /** cvPath is the base API path for a tailored CV by id. */
 function cvPath(cvID: string): string {
   return `/api/v1/me/cvs/${encodeURIComponent(cvID)}`;
+}
+
+/** EmploymentFields are the writable fields of a banked place. Both a job's `company` and
+ * a project's `name` map to `company` here; the server serves and accepts whichever key
+ * matches the kind. */
+export interface EmploymentFields {
+  kind?: string;
+  company?: string;
+  role?: string;
+  location?: string;
+  start?: string;
+  end?: string;
+  current?: boolean;
+  summary?: string;
+  stack?: string[];
+  link?: string;
+}
+
+/** AchievementFields are the writable fields of a banked achievement. Provenance is absent
+ * on purpose: no caller sends it — the server decides it from the credential — and carrying
+ * it here would invite a later change to start trusting the client with it. */
+export interface AchievementFields {
+  claim?: string;
+  context?: string;
+  metrics?: string[];
+  skills?: string[];
+  employment_id?: string;
+}
+
+/** BankResponse is the shape of GET /me/experience, read only to support the
+ * read-then-replace updates above. */
+interface BankResponse {
+  employments?: (EmploymentFields & { id: string; name?: string; atoms?: BankAtom[] })[];
+  unplaced?: BankAtom[];
+}
+
+type BankAtom = AchievementFields & { id: string };
+
+function achievementFields(a: BankAtom): AchievementFields {
+  return { claim: a.claim, context: a.context, metrics: a.metrics, skills: a.skills };
+}
+
+/** definedOnly drops undefined entries so a spread of caller-supplied changes leaves the
+ * banked value in place instead of overwriting it with undefined. */
+function definedOnly<T extends object>(o: T): Partial<T> {
+  return Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined)) as Partial<T>;
 }
