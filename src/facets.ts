@@ -44,10 +44,12 @@ export const marketFacetShape = {
     .array(z.string())
     .optional()
     .describe(
-      "Skills to filter OUT, e.g. python — jobs tagged with any of them are dropped. " +
-        "A discovery filter, not a fit test: it removes jobs that NAME the skill, not " +
-        "jobs whose real core is a stack the candidate lacks. Any other facet excludes " +
-        'the same way through `facets`, e.g. {"company_type_exclude": "outstaff"}.',
+      "Skills to filter OUT, e.g. python — drops jobs TAGGED with any of them. Tags come " +
+        "from a curated dictionary read off the description, so this is a discovery filter, " +
+        "not a fit test: a mention the dictionary does not recognise leaves the job untagged " +
+        "and in the results, and a job whose real core is a stack the candidate lacks is not " +
+        'removed by excluding a different one. Any other facet excludes the same way through ' +
+        '`facets`, e.g. {"company_type_exclude": "outstaff"}.',
     ),
   salary_min: z.number().int().min(0).optional().describe("Minimum salary (enrichment.salary_min)."),
   visa: z.boolean().optional().describe("Only jobs offering visa sponsorship."),
