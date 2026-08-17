@@ -89,8 +89,9 @@ vocabulary. Discover valid values with the `facets` tool — do not invent them.
 **Geography widens.** `region`, `country` and `city` are ONE OR-group: `region: ["eu"]`
 with `country: ["IT"]` means "in Europe **or** in Italy" and returns everything the
 region alone would. To search a single country, pass `country` and omit `region`. The
-combination is for genuinely disjoint reach ("Europe or Brazil") — intersecting a region
-with a country inside it would always be empty, so that is not what these do.
+three name a single concept — *where* — so picking two places reads as "either", which
+is what makes `region: ["eu"]` with `country: ["BR"]` ("Europe or Brazil") useful. There
+is no AND to switch on: `_mode=and` does not apply to geography.
 
 **Unread params are ignored, not refused.** A filter key the API does not recognize
 does not fail the request, it widens it. Such keys come back in the result's `ignored`
