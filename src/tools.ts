@@ -64,7 +64,7 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
     "facets",
     {
       description:
-        "List the market's filter vocabulary: every facet's live values with a vacancy count each, plus the skills list and numeric ranges. Call this FIRST to discover real values for `search` and `market_fit` — do not invent facet values.",
+        "List the market's filter vocabulary: every facet's live values with a vacancy count each, plus the skills list and numeric ranges. Call this FIRST to discover real values for `search` and `market_fit` — do not invent facet values. A filter key the API does not recognise is ignored rather than refused, so a result wrapped as {data, ignored} counted a broader market than the one asked for — retry with the suggested name before quoting any number from it.",
       inputSchema: { ...marketFacetShape },
       annotations: { readOnlyHint: true },
     },

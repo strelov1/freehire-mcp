@@ -64,3 +64,36 @@ describe("buildFacetParams exclusions", () => {
     expect(q.getAll("skills_exclude")).toEqual(["python", "php"]);
   });
 });
+
+describe("single-object warnings", () => {
+  it("carries ignored params out of facets and coverage", async () => {
+    // These two answer with one object, not a list, and both turn a filter into
+    // a number someone quotes — a vacancy count, a coverage percentage. The
+    // model has to see that the filter was dropped, or it quotes the wider one.
+    const body = {
+      data: { total: 5 },
+      meta: { ignored_params: [{ param: "country", did_you_mean: "countries" }] },
+    };
+
+    const facets = await new Client("http://api.test", "k", stubFetch(body).fetch).facets(
+      new URLSearchParams(),
+    );
+    expect(facets).toEqual({ data: { total: 5 }, ignored: [{ param: "country", did_you_mean: "countries" }] });
+
+    const coverage = await new Client("http://api.test", "k", stubFetch(body).fetch).coverage(
+      ["go"],
+      new URLSearchParams(),
+    );
+    expect(coverage).toEqual({ data: { total: 5 }, ignored: [{ param: "country", did_you_mean: "countries" }] });
+  });
+
+  it("returns the payload unwrapped when nothing was ignored", async () => {
+    // A clean call keeps the shape hosts already parse: the data object itself,
+    // with no wrapper to unpick.
+    const { fetch } = stubFetch({ data: { total: 5 }, meta: {} });
+
+    const facets = await new Client("http://api.test", "k", fetch).facets(new URLSearchParams());
+
+    expect(facets).toEqual({ total: 5 });
+  });
+});

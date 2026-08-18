@@ -109,13 +109,13 @@ export class Client {
   /** coverage scores a skill list against the facet-filtered market
    * (POST /market/coverage): skills go in the body, facets in the query string. */
   async coverage(skills: string[], params: URLSearchParams): Promise<unknown> {
-    return (await this.do("POST", withQuery("/api/v1/market/coverage", params), { skills })).data;
+    return withIgnored(await this.do("POST", withQuery("/api/v1/market/coverage", params), { skills }));
   }
 
   /** facets returns the market's facet-value distributions under an optional
    * filter (GET /jobs/facets): the filter/skill vocabulary with counts. */
   async facets(params: URLSearchParams): Promise<unknown> {
-    return (await this.do("GET", withQuery("/api/v1/jobs/facets", params))).data;
+    return withIgnored(await this.do("GET", withQuery("/api/v1/jobs/facets", params)));
   }
 
   /** getJob fetches a single job by its public slug (GET /jobs/:slug). */
@@ -456,4 +456,17 @@ function achievementFields(a: BankAtom): AchievementFields {
  * banked value in place instead of overwriting it with undefined. */
 function definedOnly<T extends object>(o: T): Partial<T> {
   return Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined)) as Partial<T>;
+}
+
+/** withIgnored returns an envelope's `data`, wrapped as `{data, ignored}` when the
+ * API reported params it did not read.
+ *
+ * Wrapped only then: these endpoints answer a single object, and hosts already
+ * parse it directly, so a permanent wrapper would be churn on every clean call.
+ * The warning has to travel in the payload — a count or a coverage percentage
+ * computed under a dropped filter reads exactly as authoritative as a real one. */
+function withIgnored(env: Envelope): unknown {
+  const ignored = env.meta?.ignored_params;
+  if (!ignored?.length) return env.data;
+  return { data: env.data, ignored };
 }

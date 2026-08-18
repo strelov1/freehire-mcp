@@ -95,9 +95,11 @@ is no AND to switch on: `_mode=and` does not apply to geography.
 
 **Unread params are ignored, not refused.** A filter key the API does not recognize
 does not fail the request, it widens it. Such keys come back in the result's `ignored`
-list, with `did_you_mean` when only the grammatical number was wrong. A `total` from a
-response carrying `ignored` answers a broader question than the one asked — retry with
-the suggested name before reporting it.
+list, with `did_you_mean` when only the grammatical number was wrong. `search` reports it
+alongside `total`; `facets` and `market_fit` answer a single object, so they wrap it as
+`{data, ignored}` — and only then, leaving a clean call's shape untouched. Any number from
+a result carrying `ignored` answers a broader question than the one asked — retry with the
+suggested name before reporting it.
 
 **Descriptions.** `search` reads the API's agent endpoint, so every hit already carries
 the posting's full description rendered as markdown — a host can screen a result set
