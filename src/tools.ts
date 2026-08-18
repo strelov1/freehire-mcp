@@ -64,7 +64,7 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
     "facets",
     {
       description:
-        "List the market's filter vocabulary: every facet's live values with a vacancy count each, plus the skills list and numeric ranges. Call this FIRST to discover real values for `search` and `market_fit` — do not invent facet values.",
+        "List the market's filter vocabulary: every facet's live values with a vacancy count each, plus the skills list and numeric ranges. Call this FIRST to discover real values for `search` and `market_fit` — do not invent facet values. A filter key the API does not recognise is ignored rather than refused, so a result wrapped as {data, ignored} counted a broader market than the one asked for — retry with the suggested name before quoting any number from it.",
       inputSchema: { ...marketFacetShape },
       annotations: { readOnlyHint: true },
     },
@@ -75,7 +75,8 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
     "search",
     {
       description:
-        "Search open jobs by keyword with optional facet filters. Each result carries the job's FULL description as markdown alongside title, company, location and public_slug, plus the total match count — so you can screen a whole result set without calling `job` per hit. Use the returned slug with `job`, `apply`, `save`, etc.",
+        "Search open jobs by keyword with optional facet filters. Each result carries the job's FULL description as markdown alongside title, company, location and public_slug, plus the total match count — so you can screen a whole result set without calling `job` per hit. Use the returned slug with `job`, `apply`, `save`, etc. " +
+        "Two traps worth knowing. Geography (region/country/city) is ONE OR-group: passing region AND country widens rather than narrows, so drop the region to search a single country. And a filter param the API does not recognize is ignored rather than refused — the search still runs, just broader — so when a result carries an `ignored` list, its `total` answers a wider question than the one asked; retry with the suggested name before reporting the number.",
       inputSchema: {
         query: z.string().describe("Keyword query, e.g. 'golang backend'. Empty string matches all."),
         limit: z

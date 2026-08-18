@@ -12,9 +12,19 @@ export const marketFacetShape = {
   region: z
     .array(z.string())
     .optional()
-    .describe("Region codes (OR within): global|ru|cis|central_asia|eu|us."),
-  country: z.array(z.string()).optional().describe("ISO-3166 country codes, e.g. BR, US."),
-  city: z.array(z.string()).optional().describe("City slugs."),
+    .describe(
+      "Region codes: global|ru|cis|central_asia|eu|us. WIDENS with country/city — " +
+        "region+country means 'in the region OR the country', not 'the country inside " +
+        "the region'. To search one country, pass country and OMIT region.",
+    ),
+  country: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "ISO-3166 country codes, e.g. BR, US. Omit `region` when narrowing to a country — " +
+        "the two OR together, so region+country returns everything the region alone would.",
+    ),
+  city: z.array(z.string()).optional().describe("City slugs. ORs with region and country."),
   company: z.array(z.string()).optional().describe("Company slugs."),
   category: z
     .array(z.string())
@@ -30,6 +40,17 @@ export const marketFacetShape = {
     .optional()
     .describe("Employment type, e.g. full_time, contract."),
   english_level: z.array(z.string()).optional().describe("English level, e.g. a2, b1, b2, c1."),
+  exclude_skill: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Skills to filter OUT, e.g. python — drops jobs TAGGED with any of them. Tags come " +
+        "from a curated dictionary read off the description, so this is a discovery filter, " +
+        "not a fit test: a mention the dictionary does not recognise leaves the job untagged " +
+        "and in the results, and a job whose real core is a stack the candidate lacks is not " +
+        'removed by excluding a different one. Any other facet excludes the same way through ' +
+        '`facets`, e.g. {"company_type_exclude": "outstaff"}.',
+    ),
   salary_min: z.number().int().min(0).optional().describe("Minimum salary (enrichment.salary_min)."),
   visa: z.boolean().optional().describe("Only jobs offering visa sponsorship."),
   facets: z
@@ -53,6 +74,7 @@ export type FacetInput = {
   seniority?: string[];
   employment_type?: string[];
   english_level?: string[];
+  exclude_skill?: string[];
   salary_min?: number;
   visa?: boolean;
   facets?: Record<string, string | string[]>;
@@ -69,6 +91,7 @@ const namedFacets: Record<string, string> = {
   seniority: "seniority",
   employment_type: "employment_type",
   english_level: "english_level",
+  exclude_skill: "skills_exclude",
 };
 
 /** buildFacetParams collects the shared market-filter inputs into API query params. */

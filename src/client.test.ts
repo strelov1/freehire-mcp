@@ -70,10 +70,9 @@ describe("Client", () => {
     expect(q.get("limit")).toBe("10");
     expect(q.get("offset")).toBe("20");
     expect(q.get("regions")).toBe("eu");
-    expect(q.get("semantic_ratio")).toBe("0");
-    // The agent endpoint, always asked for full descriptions as markdown.
+    // The agent endpoint returns full descriptions on its own, so only the rendering
+    // is asked for (searchWarnings.test.ts covers the params that are not read).
     expect(last.url.startsWith("/api/v1/agent/jobs/search")).toBe(true);
-    expect(q.get("include_description")).toBe("true");
     expect(q.get("description_format")).toBe("markdown");
   });
 
