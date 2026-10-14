@@ -1,0 +1,14 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "freehire",
+  "version": "0.6.0",
+  "description": "Search open IT job postings from thousands of company career boards, read any posting in full, and look up who is hiring. Read-only and anonymous.",
+  "author": {
+    "name": "ILYA STRELOV TECNOLOGIA DA INFORMACAO LTDA",
+    "url": "https://freehire.me"
+  },
+  "homepage": "https://freehire.me",
+  "repository": "https://github.com/strelov1/freehire-mcp",
+  "license": "MIT",
+  "keywords": ["jobs", "job-search", "careers", "hiring", "recruiting", "mcp"]
+}
