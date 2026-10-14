@@ -14,6 +14,19 @@ same API, same credentials, exposed as MCP tools instead of shell commands.
 
 ## Install
 
+### Hosted endpoint (no install, no key)
+
+The read-only job search tools are also served remotely at
+`https://freehire.me/api/v1/mcp` (Streamable HTTP). In Claude Code, install it as a plugin:
+
+```
+/plugin install freehire --marketplace strelov1/freehire-mcp
+```
+
+In other hosts, add the URL as a custom remote connector.
+
+### Local server (npm)
+
 No global install needed — the host runs it via `npx`. Add it to your host's MCP
 configuration (Claude Desktop → **Settings → Developer → Edit config**, or
 `~/.claude.json` for Claude Code):
