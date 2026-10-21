@@ -84,6 +84,13 @@ export class Client {
     return (await this.do("GET", "/api/v1/auth/me")).data;
   }
 
+  /** profile returns the caller's saved job-search profile (GET /me/profile) --
+   * their specializations, target skills, excluded skills, location preferences
+   * and contact-free CV. */
+  async profile(): Promise<unknown> {
+    return (await this.do("GET", "/api/v1/me/profile")).data;
+  }
+
   /** search runs a keyword job search with optional facet filters
    * (GET /agent/jobs/search). That endpoint runs the same query as the web's
    * /jobs/search but, for programmatic consumers, replaces the index's truncated
@@ -180,6 +187,20 @@ export class Client {
    * (GET /me/submissions). */
   async mySubmissions(): Promise<unknown> {
     return (await this.do("GET", "/api/v1/me/submissions")).data;
+  }
+
+  /** contribute hands one job link to freehire (POST /jobs/resolve) -- the same intake the
+   * website, the Telegram bot, the browser extension and the CLI use. Surface is tagged 'mcp'.
+   *
+   * The server checks the catalog, imports the vacancy when anything can read it, and records
+   * the board behind it for onboarding either way; the answer says which of those happened. */
+  async contribute(url: string): Promise<unknown> {
+    return (await this.do("POST", "/api/v1/jobs/resolve", { url, surface: "mcp" })).data;
+  }
+
+  /** myContributions lists the boards the caller has contributed (GET /me/contributions). */
+  async myContributions(): Promise<unknown> {
+    return (await this.do("GET", "/api/v1/me/contributions")).data;
   }
 
   /** pendingSubmissions lists the moderator review queue (GET /submissions). */

@@ -58,6 +58,7 @@ describe("registerTools", () => {
       [
         "apply",
         "company",
+        "contribute",
         "cv_context",
         "cv_edit",
         "cv_get",
@@ -77,8 +78,10 @@ describe("registerTools", () => {
         "jobs_edit",
         "market_fit",
         "my",
+        "my_contributions",
         "my_submissions",
         "note",
+        "profile",
         "save",
         "search",
         "stage",
@@ -150,5 +153,38 @@ describe("registerTools", () => {
     const text = (res.content as { type: string; text: string }[])[0].text;
     expect(text).toContain("401");
     expect(text).toContain("freehire auth login");
+  });
+
+  it("profile returns the candidate profile", async () => {
+    apiBody = { data: { skills: ["typescript", "go"] } };
+    const res = await mcp.callTool({ name: "profile", arguments: {} });
+    expect(res.isError).toBeFalsy();
+    expect(last.method).toBe("GET");
+    expect(last.url).toBe("/api/v1/me/profile");
+    const text = (res.content as { type: string; text: string }[])[0].text;
+    expect(JSON.parse(text)).toEqual({ skills: ["typescript", "go"] });
+  });
+
+  it("contribute posts url and surface to /jobs/resolve", async () => {
+    apiBody = { data: { public_slug: "dev-acme", status: "imported" } };
+    const res = await mcp.callTool({
+      name: "contribute",
+      arguments: { url: "https://acme.recruitee.com/o/dev" },
+    });
+    expect(res.isError).toBeFalsy();
+    expect(last.method).toBe("POST");
+    expect(last.url).toBe("/api/v1/jobs/resolve");
+    expect(JSON.parse(last.body)).toEqual({
+      url: "https://acme.recruitee.com/o/dev",
+      surface: "mcp",
+    });
+  });
+
+  it("my_contributions lists caller contributions", async () => {
+    apiBody = { data: [{ url: "https://acme.recruitee.com", status: "imported" }] };
+    const res = await mcp.callTool({ name: "my_contributions", arguments: {} });
+    expect(res.isError).toBeFalsy();
+    expect(last.method).toBe("GET");
+    expect(last.url).toBe("/api/v1/me/contributions");
   });
 });

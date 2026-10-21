@@ -66,6 +66,7 @@ rather than the server failing to start.
 | Tool | Purpose |
 |------|---------|
 | `whoami` | Authenticated user (verify the key). |
+| `profile` | The candidate's saved job-search profile (skills, preferences, contact-free CV). |
 | `facets` | The filter/skill vocabulary: every facet's live values with counts. **Call first.** |
 | `search` | Keyword + facet job search; returns jobs **with their full description as markdown** and the total match count. |
 | `market_fit` | Score a skill list against live market demand (coverage + gaps). |
@@ -88,6 +89,8 @@ rather than the server failing to start.
 | `experience_remove_employment` / `experience_remove_achievement` | Delete one. No undo; a place must be empty first. |
 | `submit` | Submit a vacancy for moderation. |
 | `my_submissions` | The caller's submissions with status. |
+| `contribute` | Hand over a vacancy or company career board link to the catalogue intake. |
+| `my_contributions` | The caller's contributed links and boards with ingestion status. |
 | `jobs_add` / `jobs_edit` | Moderator: author / edit a job (403 without the role). |
 | `submissions_pending` | Moderator: the review queue. |
 | `submission_approve` / `submission_reject` | Moderator: decide on a submission. |

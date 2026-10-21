@@ -61,6 +61,17 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
   );
 
   server.registerTool(
+    "profile",
+    {
+      description:
+        "Return the caller's saved job-search profile: their specializations, target skills, excluded skills, location preferences, and contact-free CV. Call this before searching or tailoring to ground your work in what the candidate already told freehire.",
+      inputSchema: {},
+      annotations: { readOnlyHint: true },
+    },
+    async () => run(() => getClient().profile()),
+  );
+
+  server.registerTool(
     "facets",
     {
       description:
@@ -476,6 +487,30 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
       annotations: { readOnlyHint: true },
     },
     async () => run(() => getClient().mySubmissions()),
+  );
+
+  server.registerTool(
+    "contribute",
+    {
+      description:
+        "Hand freehire a link to a vacancy or an ATS company career board (the same intake the website and CLI use). If the posting already exists you get its slug back; if we can read the page it is imported into the catalogue; if the company's board is one we do not crawl yet, it is queued for onboarding. Check status of sent links with my_contributions.",
+      inputSchema: {
+        url: z.string().url().describe("The job posting or company career board URL to contribute."),
+      },
+      annotations: { readOnlyHint: false },
+    },
+    async ({ url }) => run(() => getClient().contribute(url)),
+  );
+
+  server.registerTool(
+    "my_contributions",
+    {
+      description:
+        "List the vacancy and company career board links the caller has contributed, with their status (found, tracked, imported, review, queued).",
+      inputSchema: {},
+      annotations: { readOnlyHint: true },
+    },
+    async () => run(() => getClient().myContributions()),
   );
 
   // Moderator-only tools. A regular API key gets a 403 (surfaced as isError).
