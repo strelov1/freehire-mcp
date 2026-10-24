@@ -138,7 +138,7 @@ describe("Client", () => {
     expect(last.contentType).toBe("application/json");
     expect(JSON.parse(last.body)).toEqual({
       url: "https://acme.recruitee.com/o/senior-go",
-      surface: "mcp",
+      surface: "cli",
     });
     expect(data).toEqual({ public_slug: "go-dev-acme", status: "imported" });
   });
@@ -146,13 +146,13 @@ describe("Client", () => {
   it("myContributions GETs /me/contributions", async () => {
     handler = () => ({
       status: 200,
-      body: { data: [{ url: "https://acme.recruitee.com", status: "imported" }] },
+      body: { data: [{ url: "https://acme.recruitee.com", status: "pending" }] },
     });
     const data = await newClient().myContributions();
     expect(last.method).toBe("GET");
     expect(last.url).toBe("/api/v1/me/contributions");
     expect(last.auth).toBe("Bearer fhk_test");
-    expect(data).toEqual([{ url: "https://acme.recruitee.com", status: "imported" }]);
+    expect(data).toEqual([{ url: "https://acme.recruitee.com", status: "pending" }]);
   });
 
   it("patchCV PATCHes the CV with the ops batch the server decodes", async () => {

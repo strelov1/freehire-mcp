@@ -176,12 +176,12 @@ describe("registerTools", () => {
     expect(last.url).toBe("/api/v1/jobs/resolve");
     expect(JSON.parse(last.body)).toEqual({
       url: "https://acme.recruitee.com/o/dev",
-      surface: "mcp",
+      surface: "cli",
     });
   });
 
   it("my_contributions lists caller contributions", async () => {
-    apiBody = { data: [{ url: "https://acme.recruitee.com", status: "imported" }] };
+    apiBody = { data: [{ url: "https://acme.recruitee.com", status: "pending" }] };
     const res = await mcp.callTool({ name: "my_contributions", arguments: {} });
     expect(res.isError).toBeFalsy();
     expect(last.method).toBe("GET");

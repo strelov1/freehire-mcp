@@ -493,7 +493,7 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
     "contribute",
     {
       description:
-        "Hand freehire a link to a vacancy or an ATS company career board (the same intake the website and CLI use). If the posting already exists you get its slug back; if we can read the page it is imported into the catalogue; if the company's board is one we do not crawl yet, it is queued for onboarding. Check status of sent links with my_contributions.",
+        "Hand freehire a link to a vacancy or an ATS company career board (the same intake the website and CLI use). If the posting already exists you get its slug back; if we can read the page it is imported into the catalogue; if the company's board is one we do not crawl yet, it is queued for onboarding. The answer's status is one of found, tracked, imported, review or queued. Check sent links later with my_contributions.",
       inputSchema: {
         url: z.string().url().describe("The job posting or company career board URL to contribute."),
       },
@@ -506,7 +506,7 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
     "my_contributions",
     {
       description:
-        "List the vacancy and company career board links the caller has contributed, with their status (found, tracked, imported, review, queued).",
+        "List the vacancy and company career board links the caller has contributed, with their status: pending (queued for onboarding), review (manual triage), onboarded (now crawled) or rejected.",
       inputSchema: {},
       annotations: { readOnlyHint: true },
     },
