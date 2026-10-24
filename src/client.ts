@@ -190,12 +190,14 @@ export class Client {
   }
 
   /** contribute hands one job link to freehire (POST /jobs/resolve) -- the same intake the
-   * website, the Telegram bot, the browser extension and the CLI use. Surface is tagged 'mcp'.
+   * website, the Telegram bot, the browser extension and the CLI use. Surface is tagged 'cli': this
+   * server shares the CLI's API and credentials, and the backend stores any tag it does not
+   * know as 'unknown'.
    *
    * The server checks the catalog, imports the vacancy when anything can read it, and records
    * the board behind it for onboarding either way; the answer says which of those happened. */
   async contribute(url: string): Promise<unknown> {
-    return (await this.do("POST", "/api/v1/jobs/resolve", { url, surface: "mcp" })).data;
+    return (await this.do("POST", "/api/v1/jobs/resolve", { url, surface: "cli" })).data;
   }
 
   /** myContributions lists the boards the caller has contributed (GET /me/contributions). */
