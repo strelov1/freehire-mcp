@@ -59,6 +59,15 @@ describe("Client", () => {
     expect(data).toEqual({ email: "me@example.com" });
   });
 
+  it("reads the saved profile on profile()", async () => {
+    handler = () => ({ status: 200, body: { data: { skills: ["python", "react"] } } });
+    const data = await newClient().profile();
+    expect(last.method).toBe("GET");
+    expect(last.url).toBe("/api/v1/me/profile");
+    expect(last.auth).toBe("Bearer fhk_test");
+    expect(data).toEqual({ skills: ["python", "react"] });
+  });
+
   it("search returns data + total and passes facets, q, limit, offset", async () => {
     handler = () => ({ status: 200, body: { data: [{ public_slug: "s1" }], meta: { total: 42 } } });
     const params = new URLSearchParams();
@@ -118,6 +127,32 @@ describe("Client", () => {
     expect(last.method).toBe("GET");
     expect(last.url).toBe("/api/v1/me/cvs/7");
     expect(data).toEqual({ id: 7 });
+  });
+
+  it("contribute POSTs url and surface to /jobs/resolve", async () => {
+    handler = () => ({ status: 201, body: { data: { public_slug: "go-dev-acme", status: "imported" } } });
+    const data = await newClient().contribute("https://acme.recruitee.com/o/senior-go");
+    expect(last.method).toBe("POST");
+    expect(last.url).toBe("/api/v1/jobs/resolve");
+    expect(last.auth).toBe("Bearer fhk_test");
+    expect(last.contentType).toBe("application/json");
+    expect(JSON.parse(last.body)).toEqual({
+      url: "https://acme.recruitee.com/o/senior-go",
+      surface: "mcp",
+    });
+    expect(data).toEqual({ public_slug: "go-dev-acme", status: "imported" });
+  });
+
+  it("myContributions GETs /me/contributions", async () => {
+    handler = () => ({
+      status: 200,
+      body: { data: [{ url: "https://acme.recruitee.com", status: "imported" }] },
+    });
+    const data = await newClient().myContributions();
+    expect(last.method).toBe("GET");
+    expect(last.url).toBe("/api/v1/me/contributions");
+    expect(last.auth).toBe("Bearer fhk_test");
+    expect(data).toEqual([{ url: "https://acme.recruitee.com", status: "imported" }]);
   });
 
   it("patchCV PATCHes the CV with the ops batch the server decodes", async () => {
