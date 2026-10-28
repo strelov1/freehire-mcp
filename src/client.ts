@@ -569,7 +569,9 @@ function parseRPC(text: string): RPCResponse {
   if (trimmed.startsWith("{")) return JSON.parse(trimmed) as RPCResponse;
   for (const line of trimmed.split("\n")) {
     if (!line.startsWith("data:")) continue;
-    const msg = JSON.parse(line.slice(5)) as RPCResponse;
+    const payload = line.slice(5).trim();
+    if (!payload) continue;
+    const msg = JSON.parse(payload) as RPCResponse;
     if (msg.id === 1) return msg;
   }
   throw new Error("mcp: no response in the server's answer");
