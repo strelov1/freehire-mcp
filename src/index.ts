@@ -31,8 +31,21 @@ async function main(): Promise<void> {
     { name: "freehire", version: VERSION },
     {
       instructions:
-        "Tools over the freehire job API. Start with `facets` to discover real filter values and skill slugs, " +
-        "then `search`. Address jobs by their public_slug. Use `market_fit` to measure a CV's skills against demand.",
+        "Tools over the freehire job API, acting as the account whose API key this is. " +
+        "Searching: join a role's two or three names in one query with an uppercase OR " +
+        '(title:SRE OR title:"site reliability"); put location, work mode, seniority and skills in ' +
+        "filters, never in the query; if few results come back, loosen one constraint at a time and " +
+        "say which. A value you are unsure of comes from `list_filter_values` or `facets`. When a " +
+        "result names `ignored` params or `ignored_values`, the answer is not the one asked for — fix " +
+        "the name or value and retry instead of reporting it. Shortlist from the search results, read " +
+        "only the final few in full with `job`, and run `check_jobs_open` on them before presenting. " +
+        "Present jobs as a table of title, company, location, posted date and link, naming the source. " +
+        "Address jobs by their public_slug. `similar_jobs` finds more like one; `salary_stats` and " +
+        "`job_market_stats` answer pay and market size; `market_fit` measures a skill list against demand. " +
+        "Job alerts are saved searches delivered by email, Telegram, the app or a webhook, never to this " +
+        "chat: run the same `search` before `subscribe`, change one by reading `list_subscriptions` and " +
+        "passing `update_subscription` only what changes, pause rather than unsubscribe to hold one, and " +
+        "read what alerts matched with `subscription_updates`.",
     },
   );
 

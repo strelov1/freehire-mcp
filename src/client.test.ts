@@ -294,3 +294,25 @@ describe("Client — experience bank", () => {
     await expect(newClient().removeEmployment("emp-1")).rejects.toThrow(/still holds 3/);
   });
 });
+
+describe("callHosted", () => {
+  it("reads a tools/call answer delivered as a one-event SSE stream", async () => {
+    const sse =
+      'event: message\ndata: {"jsonrpc":"2.0","id":1,"result":{"content":[{"type":"text","text":"ok"}]}}\n\n';
+    const fetchImpl = (async () =>
+      new Response(sse, { status: 200, headers: { "content-type": "text/event-stream" } })) as typeof fetch;
+    const c = new Client("http://api.test", "k", fetchImpl);
+
+    const res = await c.callHosted("public", "salary_stats", {});
+
+    expect(res.content).toEqual([{ type: "text", text: "ok" }]);
+  });
+
+  it("raises a JSON-RPC error as an error", async () => {
+    const body = JSON.stringify({ jsonrpc: "2.0", id: 1, error: { code: -32602, message: "unknown tool" } });
+    const fetchImpl = (async () => new Response(body, { status: 200 })) as typeof fetch;
+    const c = new Client("http://api.test", "k", fetchImpl);
+
+    await expect(c.callHosted("public", "nope", {})).rejects.toThrow("unknown tool");
+  });
+});

@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "freehire",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Search open IT job postings from thousands of company career boards, read any posting in full, and look up who is hiring. Read-only and anonymous.",
   "author": {
     "name": "ILYA STRELOV TECNOLOGIA DA INFORMACAO LTDA",

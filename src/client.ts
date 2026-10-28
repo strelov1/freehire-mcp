@@ -21,8 +21,14 @@ export interface IgnoredParam {
   did_you_mean?: string;
 }
 
+/** IgnoredValues maps a filter param to the values the API did not recognise in it,
+ * e.g. `{"skills": ["golangg"]}`. Unlike an ignored param, an unknown value still
+ * narrows — to nothing — so a result carrying it reads as an empty market when it is
+ * a typo. */
+export type IgnoredValues = Record<string, string[]>;
+
 /** Page is a slice of list results: the raw `data` array, the total match count
- * from `meta`, and any params the API ignored.
+ * from `meta`, and any params or values the API ignored.
  *
  * `ignored` rides in the tool result rather than a log line: an unread filter
  * widens the search instead of failing it, so the count comes back larger and
@@ -33,12 +39,13 @@ export interface Page {
   data: unknown;
   total: number;
   ignored?: IgnoredParam[];
+  ignored_values?: IgnoredValues;
 }
 
 /** envelope is the shared API response wrapper: {data, meta, error}. */
 interface Envelope {
   data?: unknown;
-  meta?: { total?: number; ignored_params?: IgnoredParam[] };
+  meta?: { total?: number; ignored_params?: IgnoredParam[]; ignored_values?: IgnoredValues };
   error?: string;
 }
 
@@ -110,6 +117,7 @@ export class Client {
     const env = await this.do("GET", `/api/v1/agent/jobs/search?${params.toString()}`);
     const page: Page = { data: env.data, total: env.meta?.total ?? 0 };
     if (env.meta?.ignored_params?.length) page.ignored = env.meta.ignored_params;
+    if (hasValues(env.meta?.ignored_values)) page.ignored_values = env.meta?.ignored_values;
     return page;
   }
 
@@ -395,6 +403,45 @@ export class Client {
     throw new ApiError(404, `no achievement ${id} in your bank — read experience_list for the ids`);
   }
 
+  /** callHosted calls one tool on freehire's own hosted MCP server and returns its result
+   * as served — for the tools whose logic lives only there.
+   *
+   * `public` is the anonymous catalogue server (/api/v1/mcp): salary and market figures,
+   * similar postings, the liveness check and the filter vocabulary have no REST route of
+   * their own. `account` is the signed-in server (/api/v1/mcp/account), which admits a
+   * full-scope API key: job alerts are a saved search plus one subscription per channel,
+   * a channel rule and a match ledger, and re-deriving that here from the REST routes would
+   * be a second implementation that drifts from the website's. Forwarding keeps one.
+   *
+   * Both servers are stateless, so one POST carrying tools/call is the whole exchange —
+   * no initialize, no session. The answer may come back as JSON or as a one-event SSE
+   * stream, depending on what the server prefers. */
+  async callHosted(server: "public" | "account", name: string, args: Record<string, unknown>): Promise<HostedResult> {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      Accept: "application/json, text/event-stream",
+    };
+    if (server === "account") headers.Authorization = `Bearer ${this.token}`;
+    const path = server === "account" ? "/api/v1/mcp/account" : "/api/v1/mcp";
+    const body = JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/call", params: { name, arguments: args } });
+
+    const resp = await this.fetchImpl(this.baseURL + path, { method: "POST", headers, body });
+    const text = await resp.text();
+    if (!resp.ok) {
+      let message = "";
+      try {
+        message = (JSON.parse(text) as Envelope).error ?? "";
+      } catch {
+        // A non-JSON error body leaves the message empty; the status still carries.
+      }
+      throw new ApiError(resp.status, message);
+    }
+    const msg = parseRPC(text);
+    if (msg.error) throw new Error(`mcp error ${msg.error.code}: ${msg.error.message}`);
+    if (!msg.result) throw new Error("mcp: empty result");
+    return msg.result;
+  }
+
   private async do(method: string, path: string, body?: unknown): Promise<Envelope> {
     const headers: Record<string, string> = {
       Authorization: `Bearer ${this.token}`,
@@ -481,8 +528,8 @@ function definedOnly<T extends object>(o: T): Partial<T> {
   return Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined)) as Partial<T>;
 }
 
-/** withIgnored returns an envelope's `data`, wrapped as `{data, ignored}` when the
- * API reported params it did not read.
+/** withIgnored returns an envelope's `data`, wrapped as `{data, ignored,
+ * ignored_values}` when the API reported params or values it did not read.
  *
  * Wrapped only then: these endpoints answer a single object, and hosts already
  * parse it directly, so a permanent wrapper would be churn on every clean call.
@@ -490,6 +537,40 @@ function definedOnly<T extends object>(o: T): Partial<T> {
  * computed under a dropped filter reads exactly as authoritative as a real one. */
 function withIgnored(env: Envelope): unknown {
   const ignored = env.meta?.ignored_params;
-  if (!ignored?.length) return env.data;
-  return { data: env.data, ignored };
+  const values = env.meta?.ignored_values;
+  if (!ignored?.length && !hasValues(values)) return env.data;
+  const out: { data: unknown; ignored?: IgnoredParam[]; ignored_values?: IgnoredValues } = { data: env.data };
+  if (ignored?.length) out.ignored = ignored;
+  if (hasValues(values)) out.ignored_values = values;
+  return out;
+}
+
+function hasValues(v: IgnoredValues | undefined): v is IgnoredValues {
+  return !!v && Object.keys(v).length > 0;
+}
+
+/** HostedResult is a tools/call result from a hosted freehire MCP server. */
+export interface HostedResult {
+  content: { type: string; text?: string }[];
+  structuredContent?: unknown;
+  isError?: boolean;
+}
+
+interface RPCResponse {
+  id?: number;
+  result?: HostedResult;
+  error?: { code: number; message: string };
+}
+
+/** parseRPC reads the JSON-RPC response from a body that is either plain JSON or an SSE
+ * stream whose `data:` lines carry messages. */
+function parseRPC(text: string): RPCResponse {
+  const trimmed = text.trim();
+  if (trimmed.startsWith("{")) return JSON.parse(trimmed) as RPCResponse;
+  for (const line of trimmed.split("\n")) {
+    if (!line.startsWith("data:")) continue;
+    const msg = JSON.parse(line.slice(5)) as RPCResponse;
+    if (msg.id === 1) return msg;
+  }
+  throw new Error("mcp: no response in the server's answer");
 }

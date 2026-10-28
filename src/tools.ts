@@ -5,7 +5,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
-import { ApiError, type Client } from "./client.js";
+import { ApiError, type Client, type HostedResult } from "./client.js";
 import { buildFacetParams, marketFacetShape, type FacetInput } from "./facets.js";
 
 /** GetClient lazily resolves the API client, throwing when unauthenticated so the
@@ -44,6 +44,28 @@ async function run(fn: () => Promise<unknown>): Promise<ToolResult> {
   }
 }
 
+/** forward runs one tool on a hosted freehire MCP server and hands its result back as
+ * served — the hosted server's own wording, error sentences included. */
+async function forward(fn: () => Promise<HostedResult>): Promise<ToolResult> {
+  try {
+    const res = await fn();
+    const content: Content[] = res.content
+      .filter((c) => c.type === "text" && typeof c.text === "string")
+      .map((c) => ({ type: "text", text: c.text as string }));
+    if (content.length === 0 && res.structuredContent !== undefined) {
+      content.push({ type: "text", text: JSON.stringify(res.structuredContent, null, 2) });
+    }
+    return res.isError ? { content, isError: true } : { content };
+  } catch (err) {
+    return fail(err);
+  }
+}
+
+/** args drops the inputs a caller left out, so the hosted server applies its own defaults. */
+function args(input: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(input).filter(([, v]) => v !== undefined));
+}
+
 const slug = z.string().min(1).describe("The job's public slug (from search or facets results).");
 
 /** registerTools wires every freehire tool onto server, resolving the client lazily
@@ -75,7 +97,7 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
     "facets",
     {
       description:
-        "List the market's filter vocabulary: every facet's live values with a vacancy count each, plus the skills list and numeric ranges. Call this FIRST to discover real values for `search` and `market_fit` — do not invent facet values. A filter key the API does not recognise is ignored rather than refused, so a result wrapped as {data, ignored} counted a broader market than the one asked for — retry with the suggested name before quoting any number from it.",
+        "List the market's filter vocabulary: every facet's live values with a vacancy count each, plus the skills list and numeric ranges. Call this FIRST to discover real values for `search` and `market_fit` — do not invent facet values. A filter key the API does not recognise is ignored rather than refused, so a result wrapped as {data, ignored} counted a broader market than the one asked for — retry with the suggested name before quoting any number from it. A VALUE it does not recognise comes back in `ignored_values` (e.g. {\"skills\": [\"golangg\"]}): it matched nothing, so fix the spelling from this list rather than reporting an empty market.",
       inputSchema: { ...marketFacetShape },
       annotations: { readOnlyHint: true },
     },
@@ -87,9 +109,14 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
     {
       description:
         "Search open jobs by keyword with optional facet filters. Each result carries the job's FULL description as markdown alongside title, company, location and public_slug, plus the total match count — so you can screen a whole result set without calling `job` per hit. Use the returned slug with `job`, `apply`, `save`, etc. " +
-        "Two traps worth knowing. Geography (region/country/city) is ONE OR-group: passing region AND country widens rather than narrows, so drop the region to search a single country. And a filter param the API does not recognize is ignored rather than refused — the search still runs, just broader — so when a result carries an `ignored` list, its `total` answers a wider question than the one asked; retry with the suggested name before reporting the number.",
+        "How to search well: a role has several names, so join two or three in one query with an uppercase OR, e.g. title:SRE OR title:\"site reliability\". Location, work mode, seniority and skills go in their filters, never in the query. If suspiciously few results come back, loosen one constraint at a time and say which. Present results as a table of title, company, location, posted date and link, naming the source. " +
+        "Two traps worth knowing. Geography (region/country/city) is ONE OR-group: passing region AND country widens rather than narrows, so drop the region to search a single country. And a filter param the API does not recognize is ignored rather than refused — the search still runs, just broader — so when a result carries an `ignored` list, its `total` answers a wider question than the one asked; retry with the suggested name before reporting the number. A value the API does not recognise (a misspelt skill, say) is reported in `ignored_values` and matches nothing — a total of 0 beside it is a typo, not an empty market: take the right value from `list_filter_values` and retry.",
       inputSchema: {
-        query: z.string().describe("Keyword query, e.g. 'golang backend'. Empty string matches all."),
+        query: z
+          .string()
+          .describe(
+            "Free text over title, company, description and location. Empty string matches all. Operators: double quotes require every quoted word; -word excludes; uppercase OR between terms matches any alternative (at most 5), e.g. golang OR rust; title: at the start of an alternative matches the title only, e.g. title:\"product owner\" OR title:produktchef.",
+          ),
         limit: z
           .number()
           .int()
@@ -117,7 +144,7 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
     "market_fit",
     {
       description:
-        "Score a skill list against the live open-vacancy market for a filtered role: headline coverage (% of vacancies listing ≥1 skill), must-have skills held, and the missing skills that unlock the most vacancies. Here `skills` is the MEASURED set, not a filter — use facet params to define the role. One skill probes that skill's demand.",
+        "Score a skill list against the live open-vacancy market for a filtered role: headline coverage (% of vacancies listing ≥1 skill), must-have skills held, and the missing skills that unlock the most vacancies. Here `skills` is the MEASURED set, not a filter — use facet params to define the role. One skill probes that skill's demand. A result wrapped as {data, ignored, ignored_values} measured something other than what was asked: fix the named param or value and retry before quoting it.",
       inputSchema: {
         skills: z
           .array(z.string())
@@ -511,6 +538,211 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
       annotations: { readOnlyHint: true },
     },
     async () => run(() => getClient().myContributions()),
+  );
+
+  // Catalogue tools whose logic lives only on freehire's hosted MCP server: there is no
+  // REST route for them, so they are forwarded to it and answer in its own words. They
+  // read the public catalogue and need no key.
+  const list = z.array(z.string()).optional();
+  const hostedSearchShape = {
+    query: z
+      .string()
+      .optional()
+      .describe("Free text, with the same operators as `search` (quotes, -word, uppercase OR, title:)."),
+    countries: list.describe("ISO 3166-1 alpha-2 codes, e.g. DE, BR."),
+    cities: list,
+    work_mode: list.describe("Any of remote, hybrid, onsite."),
+    regions: list.describe("Any of global, north_america, latam, eu, uk, mena, africa, apac, cis."),
+    seniority: list.describe("Any of intern, junior, middle, senior, lead, staff, principal, c_level."),
+    category: list.describe("Role family, e.g. backend, frontend, devops, data."),
+    skills: list.describe("Technologies, e.g. go, kubernetes, react."),
+    require_all_skills: z.boolean().optional().describe("true: every listed skill must be present, not just one."),
+    exclude_skills: list.describe("Technologies the posting must not ask for, e.g. php."),
+    employment_type: list.describe("Any of full_time, part_time, contract, internship."),
+    salary_min: z.number().int().optional(),
+    salary_currency: z.string().optional().describe("ISO 4217 code, e.g. USD."),
+    visa_sponsorship: z.boolean().optional(),
+    english_level: list.describe("CEFR levels, e.g. B2, C1."),
+    relocation: list.describe("Any of supported, required, not_supported."),
+    company_slugs: list.describe("Employer identifiers, as carried by a result's company_slug."),
+    exclude_company_slugs: list.describe("Employers to leave out."),
+    sources: list.describe("Job boards to restrict to."),
+    posted_within_days: z.number().int().optional(),
+  };
+
+  server.registerTool(
+    "check_jobs_open",
+    {
+      description:
+        "Check whether postings are still open, by the public_slug search results carry — up to 50 per call. Use it before presenting a shortlist or acting on a saved one: each posting answers open, closed or not_found, with when it closed or was last seen live.",
+      inputSchema: { slugs: z.array(z.string().min(1)).min(1).describe("Posting slugs; up to 50 are checked per call.") },
+      annotations: { readOnlyHint: true },
+    },
+    async ({ slugs }) => forward(() => getClient().callHosted("public", "check_jobs_open", { slugs })),
+  );
+
+  server.registerTool(
+    "similar_jobs",
+    {
+      description:
+        "Postings most similar to one posting, by its slug, nearest first — for \"show me more like this\". Empty for the newest postings, whose neighbours are not computed yet.",
+      inputSchema: {
+        slug,
+        limit: z.number().int().min(1).max(20).optional().describe("How many to return, up to 20."),
+      },
+      annotations: { readOnlyHint: true },
+    },
+    async (input) => forward(() => getClient().callHosted("public", "similar_jobs", args(input))),
+  );
+
+  server.registerTool(
+    "salary_stats",
+    {
+      description:
+        "Salary percentiles (25th, median, 75th) from open postings that state pay, scoped by role family, seniority and country, with the sample size behind each figure. Currencies and pay periods are reported separately, never converted.",
+      inputSchema: {
+        category: z.string().optional().describe("Role family, e.g. backend, frontend, devops, data."),
+        seniority: z.string().optional().describe("One of intern, junior, middle, senior, lead, staff, principal, c_level."),
+        country: z.string().optional().describe("ISO 3166-1 alpha-2 code, e.g. DE."),
+      },
+      annotations: { readOnlyHint: true },
+    },
+    async (input) => forward(() => getClient().callHosted("public", "salary_stats", args(input))),
+  );
+
+  server.registerTool(
+    "job_market_stats",
+    {
+      description:
+        "How many open postings match a set of filters, and their most common role families, seniorities, skills, work modes, countries and regions. Values a filter does not recognise are dropped and named in the answer — fix them before quoting a figure.",
+      inputSchema: hostedSearchShape,
+      annotations: { readOnlyHint: true },
+    },
+    async (input) => forward(() => getClient().callHosted("public", "job_market_stats", args(input))),
+  );
+
+  server.registerTool(
+    "list_filter_values",
+    {
+      description:
+        "The values one job-search filter accepts — skills, categories, seniorities, sources, countries and the rest — each with how many open postings carry it, most common first. A value not listed matches no posting. Use it before filtering on a value you are not sure of, and to fix one a search reported in ignored_values.",
+      inputSchema: {
+        filter: z
+          .string()
+          .min(1)
+          .describe(
+            "One of category, seniority, skills, work_mode, regions, countries, cities, sources, employment_type, english_level, relocation.",
+          ),
+        contains: z
+          .string()
+          .optional()
+          .describe("Keep only values containing this text, e.g. kube; for skills a known alias also finds its value (golang finds go)."),
+        limit: z.number().int().min(1).max(200).optional().describe("How many values to return, up to 200."),
+      },
+      annotations: { readOnlyHint: true },
+    },
+    async (input) => forward(() => getClient().callHosted("public", "list_filter_values", args(input))),
+  );
+
+  // Job alerts — forwarded to the signed-in hosted server with the API key, so an alert
+  // made here is the website's own: one saved search over any filters, delivered on the
+  // channels the account has connected. MCP cannot push, so these only manage delivery.
+  const alertExample =
+    'e.g. remote senior Go roles in the EU paying at least 80k EUR is {"filters":{"work_mode":["remote"],"seniority":["senior"],"skills":["go"],"regions":["eu"],"salary_currency":["EUR"]},"salary_min":80000}';
+  const channel = z.enum(["email", "telegram", "push", "webhook"]);
+  const alertSearchShape = {
+    query: z.string().optional().describe("Free-text query, with the job search's operators."),
+    filters: z
+      .record(z.string(), z.array(z.string()))
+      .optional()
+      .describe(
+        "Facet filters by param name (skills, seniority, category, work_mode, regions, countries, cities, metros, company_slug, employment_type, salary_currency, source, …), each a list of values. An unknown filter name is refused.",
+      ),
+    salary_min: z
+      .number()
+      .int()
+      .min(0)
+      .optional()
+      .describe("Only postings whose stated salary floor is at least this, in the posting's currency — pair it with filters.salary_currency. 0 clears it on update."),
+    salary_max: z.number().int().min(0).optional().describe("Only postings whose stated salary ceiling is at most this. 0 clears it on update."),
+  };
+  const alertId = z.number().int().describe("The alert id, from list_subscriptions or subscribe.");
+
+  server.registerTool(
+    "subscribe",
+    {
+      description:
+        "Create a job alert: a saved search over ANY of the job search's filters whose new postings are delivered to the person on the channels their account has connected (email, Telegram, the mobile app, a webhook) — this conversation is not notified. " +
+        alertExample +
+        ". Run the same search with `search` first so the person sees what they will get. The search must narrow the catalogue. Values not in a filter's vocabulary are dropped and named in ignored_params. Leave channels empty for the default (email when alert mail is on, otherwise the first connected channel). The answer's alert.id addresses the alert from then on. Saves the search on the account (or reuses the one already selecting the same postings); nothing existing is changed.",
+      inputSchema: {
+        ...alertSearchShape,
+        name: z.string().optional().describe("A name for the alert (1-100 characters). Omit to name it from its filters."),
+        channels: z.array(channel).optional().describe("Where to deliver. Only a channel the account has connected is accepted."),
+      },
+      annotations: { readOnlyHint: false },
+    },
+    async (input) => forward(() => getClient().callHosted("account", "subscribe", args(input))),
+  );
+
+  server.registerTool(
+    "list_subscriptions",
+    {
+      description:
+        "List the person's job alerts with every setting: id, name, a readable filter summary AND the search as the structured object the alert tools take (query, filters, salary_min/max; `other` holds website-only filters an update keeps), whether it is paused, and each delivery channel with its active flag, pending matches and last delivery. delivery_schedule is the account-wide digest timing every alert shares.",
+      inputSchema: {},
+      annotations: { readOnlyHint: true },
+    },
+    async () => forward(() => getClient().callHosted("account", "list_subscriptions", {})),
+  );
+
+  server.registerTool(
+    "update_subscription",
+    {
+      description:
+        "Change one of the person's job alerts by its id. Read its current search from list_subscriptions and pass only what changes — every field is optional: name; the search (query, filters, salary_min, salary_max — each replaces that part, an empty filters object clears the facet filters, a salary bound of 0 clears it; website-only filters in `other` are kept); channels (the full set to deliver on — added ones must be connected, missing ones stop); paused (true stops every channel, false resumes them — prefer it to unsubscribe for holding an alert). The new search must still narrow the catalogue, and unknown values are dropped and named in ignored_params. " +
+        alertExample +
+        ". Digest timing is account-wide and not changed here. A removed channel's record of matches is deleted with it.",
+      inputSchema: {
+        id: alertId,
+        ...alertSearchShape,
+        name: z.string().optional().describe("A new name (1-100 characters)."),
+        channels: z.array(channel).optional().describe("The complete set of channels to deliver on."),
+        paused: z.boolean().optional().describe("true pauses every channel, false resumes them."),
+      },
+      annotations: { readOnlyHint: false, idempotentHint: true },
+    },
+    async (input) => forward(() => getClient().callHosted("account", "update_subscription", args(input))),
+  );
+
+  server.registerTool(
+    "unsubscribe",
+    {
+      description:
+        "Stop one job alert by its id, on every channel or on the one named. Deletes the alert's delivery on those channels and their record of matches; the saved search itself stays on the account as a bookmarked search. To hold an alert for a while, pause it with update_subscription instead.",
+      inputSchema: {
+        id: alertId,
+        channel: channel.optional().describe("Stop only this channel. Omit for all."),
+      },
+      annotations: { readOnlyHint: false, destructiveHint: true },
+    },
+    async (input) => forward(() => getClient().callHosted("account", "unsubscribe", args(input))),
+  );
+
+  server.registerTool(
+    "subscription_updates",
+    {
+      description:
+        "List the new postings the person's job alerts have matched — the same matches their alerts are built from, newest first, still-open postings only. Narrow to one alert by id, and to a window by since (RFC 3339) or days (default 7, max 30). An alert only matches postings that appeared after it was created, and matching runs every few minutes, so a new one starts empty. delivered says whether an alert already carried the posting.",
+      inputSchema: {
+        id: alertId.optional().describe("One alert's id; omit for all."),
+        since: z.string().optional().describe("Only matches recorded at or after this RFC 3339 time."),
+        days: z.number().int().min(1).max(30).optional().describe("Look back this many days (default 7, max 30). Ignored when since is given."),
+        limit: z.number().int().min(1).max(50).optional().describe("How many postings (default 20, max 50)."),
+      },
+      annotations: { readOnlyHint: true },
+    },
+    async (input) => forward(() => getClient().callHosted("account", "subscription_updates", args(input))),
   );
 
   // Moderator-only tools. A regular API key gets a 403 (surfaced as isError).
