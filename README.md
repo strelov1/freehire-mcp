@@ -71,12 +71,22 @@ rather than the server failing to start.
 | `search` | Keyword + facet job search; returns jobs **with their full description as markdown** and the total match count. |
 | `market_fit` | Score a skill list against live market demand (coverage + gaps). |
 | `job` | A single job's full content by slug. |
+| `check_jobs_open` | Whether postings are still open (up to 50 slugs). Run it on a shortlist before presenting it. |
+| `similar_jobs` | Postings most similar to one posting. |
+| `salary_stats` | Salary percentiles by role family, seniority and country, with sample sizes. |
+| `job_market_stats` | How many open postings match a set of filters, and what they ask for. |
+| `list_filter_values` | The values one filter accepts, with counts (`golang` finds `go`). |
 | `company` | A company and its open jobs by slug. |
 | `apply` | Mark a job applied. |
 | `save` / `unsave` | Bookmark / remove a bookmark. |
 | `stage` | Set the application stage (server-validated). |
 | `note` | Attach a free-text note. |
 | `my` | The caller's tracked jobs (all/viewed/saved/applied) with stage + note. |
+| `subscribe` | Create a job alert: a saved search delivered by email, Telegram, the app or a webhook. |
+| `list_subscriptions` | The caller's job alerts with every setting. |
+| `update_subscription` | Change an alert's name, search, channels, or pause it. |
+| `unsubscribe` | Stop an alert on every channel or one. |
+| `subscription_updates` | The new postings the caller's alerts have matched. |
 | `cv_tailor` | Start (or reopen) tailoring for a vacancy; returns the CV id the other `cv_*` tools take. |
 | `cv_list` | The caller's tailored CVs with the vacancy each was written for. |
 | `cv_context` | The fit analysis a tailored CV should reframe toward (missing_have vs missing_gap). |
@@ -109,6 +119,13 @@ three name a single concept — *where* — so picking two places reads as "eith
 is what makes `region: ["eu"]` with `country: ["BR"]` ("Europe or Brazil") useful. There
 is no AND to switch on: `_mode=and` does not apply to geography.
 
+**Unknown values are named, not guessed.** A filter value the API does not recognise (a
+misspelt skill such as `golangg`) is reported in `ignored_values`, e.g.
+`{"skills": ["golangg"]}`, beside `total` in `search` and in the `{data, ignored_values}`
+wrapper of `facets` and `market_fit`. Unlike an unread param it still narrows — to nothing —
+so a 0 beside it is a typo, not an empty market. Skill aliases resolve server-side
+(`golang` searches `go`); `list_filter_values` names the real value.
+
 **Unread params are ignored, not refused.** A filter key the API does not recognize
 does not fail the request, it widens it. Such keys come back in the result's `ignored`
 list, with `did_you_mean` when only the grammatical number was wrong. `search` reports it
@@ -116,6 +133,20 @@ alongside `total`; `facets` and `market_fit` answer a single object, so they wra
 `{data, ignored}` — and only then, leaving a clean call's shape untouched. Any number from
 a result carrying `ignored` answers a broader question than the one asked — retry with the
 suggested name before reporting it.
+
+**Forwarded tools.** `check_jobs_open`, `similar_jobs`, `salary_stats`,
+`job_market_stats` and `list_filter_values` have no REST route, so they are forwarded to
+freehire's anonymous hosted MCP server (`/api/v1/mcp`, no key sent). The five job-alert
+tools are forwarded to the signed-in one (`/api/v1/mcp/account`) with your API key, so an
+alert made here is exactly the website's — the same saved search, channel rule and match
+ledger, not a second implementation of them. Their answers arrive in the hosted server's
+own words. Automatic applications (`auto_apply_*`) stay on the OAuth-signed-in endpoint
+and are not offered to an API key.
+
+**Searching well.** Join a role's two or three names with an uppercase `OR`
+(`title:SRE OR title:"site reliability"`), put location, work mode, seniority and skills in
+filters rather than the query, loosen one constraint at a time when few results come back,
+shortlist from the search results and run `check_jobs_open` before presenting.
 
 **Descriptions.** `search` reads the API's agent endpoint, so every hit already carries
 the posting's full description rendered as markdown — a host can screen a result set

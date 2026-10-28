@@ -57,6 +57,7 @@ describe("registerTools", () => {
     expect(names).toEqual(
       [
         "apply",
+        "check_jobs_open",
         "company",
         "contribute",
         "cv_context",
@@ -76,20 +77,29 @@ describe("registerTools", () => {
         "job",
         "jobs_add",
         "jobs_edit",
+        "job_market_stats",
+        "list_filter_values",
+        "list_subscriptions",
         "market_fit",
         "my",
         "my_contributions",
         "my_submissions",
         "note",
         "profile",
+        "salary_stats",
         "save",
         "search",
+        "similar_jobs",
         "stage",
         "submission_approve",
         "submission_reject",
         "submissions_pending",
         "submit",
+        "subscribe",
+        "subscription_updates",
         "unsave",
+        "unsubscribe",
+        "update_subscription",
         "whoami",
       ].sort(),
     );
@@ -186,5 +196,68 @@ describe("registerTools", () => {
     expect(res.isError).toBeFalsy();
     expect(last.method).toBe("GET");
     expect(last.url).toBe("/api/v1/me/contributions");
+  });
+
+  it("forwards a catalogue tool to the anonymous hosted server, without the key", async () => {
+    apiBody = { jsonrpc: "2.0", id: 1, result: { content: [{ type: "text", text: '{"jobs":[]}' }] } };
+    const res = await mcp.callTool({ name: "check_jobs_open", arguments: { slugs: ["a-1", "b-2"] } });
+    expect(res.isError).toBeFalsy();
+    expect(last.method).toBe("POST");
+    expect(last.url).toBe("/api/v1/mcp");
+    expect(last.auth).toBeUndefined();
+    expect(JSON.parse(last.body)).toEqual({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "tools/call",
+      params: { name: "check_jobs_open", arguments: { slugs: ["a-1", "b-2"] } },
+    });
+    expect((res.content as { text: string }[])[0].text).toBe('{"jobs":[]}');
+  });
+
+  it("forwards an alert tool to the signed-in hosted server with the key, sending only given fields", async () => {
+    apiBody = { jsonrpc: "2.0", id: 1, result: { content: [{ type: "text", text: '{"alert":{"id":7}}' }] } };
+    const res = await mcp.callTool({
+      name: "update_subscription",
+      arguments: { id: 7, paused: true },
+    });
+    expect(res.isError).toBeFalsy();
+    expect(last.url).toBe("/api/v1/mcp/account");
+    expect(last.auth).toBe("Bearer fhk_test");
+    expect(JSON.parse(last.body).params).toEqual({ name: "update_subscription", arguments: { id: 7, paused: true } });
+  });
+
+  it("passes a hosted tool's refusal through as an isError result in its own words", async () => {
+    apiBody = {
+      jsonrpc: "2.0",
+      id: 1,
+      result: { isError: true, content: [{ type: "text", text: "add at least one filter or a query" }] },
+    };
+    const res = await mcp.callTool({ name: "subscribe", arguments: { filters: { skills: ["golangg"] } } });
+    expect(res.isError).toBe(true);
+    expect((res.content as { text: string }[])[0].text).toContain("add at least one filter");
+    expect(JSON.parse(last.body).params.arguments).toEqual({ filters: { skills: ["golangg"] } });
+  });
+
+  it("reports a refused key on the signed-in server with its status", async () => {
+    apiStatus = 403;
+    apiBody = { error: "api key scope is insufficient for this endpoint" };
+    const res = await mcp.callTool({ name: "list_subscriptions", arguments: {} });
+    expect(res.isError).toBe(true);
+    expect((res.content as { text: string }[])[0].text).toContain("403");
+  });
+
+  it("search carries an unknown value back as ignored_values", async () => {
+    apiBody = { data: [], meta: { total: 0, ignored_values: { skills: ["golangg"] } } };
+    const res = await mcp.callTool({ name: "search", arguments: { query: "", skills: ["golangg"] } });
+    const page = JSON.parse((res.content as { text: string }[])[0].text);
+    expect(page.total).toBe(0);
+    expect(page.ignored_values).toEqual({ skills: ["golangg"] });
+  });
+
+  it("facets wraps an unknown value as {data, ignored_values}", async () => {
+    apiBody = { data: { skills: [] }, meta: { ignored_values: { skills: ["golangg"] } } };
+    const res = await mcp.callTool({ name: "facets", arguments: { facets: { skills: "golangg" } } });
+    const out = JSON.parse((res.content as { text: string }[])[0].text);
+    expect(out).toEqual({ data: { skills: [] }, ignored_values: { skills: ["golangg"] } });
   });
 });
