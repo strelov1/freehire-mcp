@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parent.parent
 class PluginArchivesTest(unittest.TestCase):
     def test_release_metadata_and_claude_connection_match(self):
         package = json.loads((ROOT / "package.json").read_text())
-        self.assertEqual(package["version"], "1.0.2")
+        self.assertEqual(package["version"], "1.0.3")
         for filename in ("plugin.json", ".claude-plugin/plugin.json", "server.json"):
             manifest = json.loads((ROOT / filename).read_text())
             self.assertEqual(manifest["version"], package["version"], filename)

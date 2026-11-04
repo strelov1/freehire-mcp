@@ -1,6 +1,6 @@
 ---
 name: find-tech-jobs
-description: Search tech jobs, inspect employers, compare salaries and hiring demand, and use a signed-in freehire account for profile-based matching, saved jobs, application tracking, job alerts and explicitly requested automatic applications. Use when the user asks for open tech roles, market research, their job-search progress or alerts.
+description: Search tech jobs, inspect employers, compare salaries and hiring demand, and use a signed-in freehire account for profile-based matching, saved jobs, application tracking, job alerts and explicitly requested automatic applications. Use when the user asks for open tech roles, market research, their job-search progress or alerts, or encounters an unsupported dictionary term or a problem during that workflow.
 ---
 
 # Find tech jobs with freehire
@@ -22,16 +22,26 @@ freehire aggregates postings from company career boards and job sites. Preserve 
 - `market_fit` measures a skill set against demand. Use its discovered schema, including nested `filters`, and separate evidence about the market from claims about the candidate.
 
 1. Put role synonyms in one query with uppercase `OR`, such as `title:SRE OR title:"site reliability"`. Put skills, geography, seniority and work mode in the appropriate filters.
-2. Read returned filter warnings and errors. Correct unknown names or values using `facets` or `list_filter_values`, then retry before drawing a conclusion from counts.
+2. Read returned filter warnings and errors. Resolve unknown names or values using `facets` or `list_filter_values`. For an unrecognized skill, specialization or company industry, follow the dictionary workflow below, then retry with supported filters before drawing a conclusion from counts.
 3. If results are scarce, loosen one constraint at a time and tell the user which changed. Geography filters form a union: countries and cities widen to either place. Use the country-code casing and values the live vocabulary returns.
 4. Screen search descriptions first; use `get_job` for shortlisted postings that need fuller inspection. Check the final shortlist with `check_jobs_open` and omit closed postings.
 5. Present title, company, location, posted date, source and application link in a compact table. Describe uncertain freshness or missing data explicitly. Finish a market comparison only when the filters and sample behind each figure are clear.
+
+## Dictionary suggestions and problem reports
+
+This configured workflow authorizes `suggest_dictionary_term` and `report_problem` when the conditions below occur during the user's task. Send them without a separate request or confirmation. Discover their live input schemas from the active connection. These reports do not replace or remove any other account tools.
+
+When a desired skill, specialization or company industry is unrecognized by the live dictionary after checking its vocabulary and aliases, call `suggest_dictionary_term` with the user's original term and the matching `kind`: `skill`, `specialization` or `industry`. Preserve the original wording rather than submitting a guessed replacement. A suggestion requests dictionary review; it does not create a usable filter. Continue the search using supported filters or the original term as search text, and explain any changed constraints. Zero job results alone do not establish a dictionary gap; a recognized term with no matching jobs needs no suggestion.
+
+For a genuine failed operation or missing capability that prevents an intended step, call `report_problem` with concise `goal`, `expected` and `actual` fields describing the intended step, expected behavior and observed behavior. Follow the live schema's length limits. Set `category` to `tool_error` for a failed tool operation, `missing_capability` when the needed capability is unavailable, or `other` for another product problem. Include `tool_name` and `error_code` only when supplied or known. Send the minimum technical context: exclude tokens, credentials, CV content, full conversations and contact information or other identifying personal details. Ordinary empty results and dictionary gaps alone are not product problems.
+
+Report each distinct term or problem once during the task. Tell the user a suggestion or report was submitted only after that tool succeeds. On refusal or failure, describe the limitation accurately and continue with available alternatives. Do not retry the same report repeatedly or call `report_problem` to report a failure of either reporting tool. For an authentication or disconnected-account error, ask the user to reconnect through the host's sign-in flow; do not attempt a report through the disconnected connection. Keep progressing on the user's original task after reporting; if a reporting tool is absent from the connection, say it could not be submitted and continue.
 
 ## Saved jobs, tracking and reports
 
 Read `my_jobs` for the user's tracked jobs. `save_job` and `unsave_job` change bookmarks; `track_job` changes application stage or note. `apply_job` records an application the user has already made; it does not send an application to an employer. `report_job` files a report about a posting.
 
-Before any write, show the specific job or record and the proposed change, then obtain the user's confirmation. An explicit request containing that same action and target counts as confirmation. Preserve existing values outside the requested change. Report success only after the tool confirms it; report failures without implying the change happened.
+For all other personal writes, including `report_job`, show the specific job or record and the proposed change, then obtain the user's confirmation. An explicit request containing that same action and target counts as confirmation. Preserve existing values outside the requested change. Report success only after the tool confirms it; report failures without implying the change happened.
 
 ## Job alerts
 
