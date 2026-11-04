@@ -15,7 +15,7 @@
     "com.openai": {
       "interface": {
         "displayName": "freehire",
-        "shortDescription": "Search jobs, employers, salaries and hiring demand",
+        "shortDescription": "Search tech jobs and salaries",
         "longDescription": "Search open job postings by technology, seniority, location, work mode, salary or visa sponsorship. Read full postings, check whether jobs remain open, discover similar roles, and compare salaries and hiring demand. Results name their source and link to the employer's posting. Includes a job-search skill and connects to freehire's live, anonymous, read-only MCP server.",
         "developerName": "ILYA STRELOV TECNOLOGIA DA INFORMACAO LTDA",
         "category": "Productivity",
