@@ -1,7 +1,7 @@
 {
   "name": "freehire",
-  "version": "0.8.0",
-  "description": "Search open IT job postings from thousands of company career boards, read any posting in full, and see who is hiring — from Claude Code. Read-only and anonymous.",
+  "version": "1.0.2",
+  "description": "Search tech jobs, compare salaries and hiring demand, and manage saved jobs, application tracking and alerts through your freehire account.",
   "author": {
     "name": "ILYA STRELOV TECNOLOGIA DA INFORMACAO LTDA",
     "url": "https://freehire.me"
@@ -11,5 +11,11 @@
   "license": "MIT",
   "skills": "./skills/",
   "mcpServers": "./.claude-plugin/mcp.json",
-  "keywords": ["jobs", "job-search", "careers", "hiring", "mcp"]
+  "keywords": [
+    "jobs",
+    "job-search",
+    "careers",
+    "hiring",
+    "mcp"
+  ]
 }

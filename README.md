@@ -4,26 +4,32 @@
 
 An [MCP](https://modelcontextprotocol.io) server over the [freehire](https://freehire.me)
 job API. It lets any MCP host — Claude Desktop, Claude Code, or a compatible agent —
-**search, filter, and apply to IT jobs** without a browser, authenticating with a
-personal API key. Postings are crawled straight from company career boards — 3.3M+ open
+**search, filter, and apply to IT jobs**. The hosted plugin connects through OAuth;
+the local npm server authenticates with a personal API key. Postings are crawled straight from company career boards — 3.3M+ open
 roles across 294K companies, normalized into one schema and tagged with stack, seniority,
 region and work mode ([live figures](https://freehire.me/open)).
 
-It mirrors the [freehire CLI](https://github.com/strelov1/freehire-cli):
+The local server mirrors the [freehire CLI](https://github.com/strelov1/freehire-cli):
 same API, same credentials, exposed as MCP tools instead of shell commands.
 
 ## Install
 
-### Hosted endpoint (no install, no key)
+### Hosted account connection (OAuth)
 
-The read-only job search tools are also served remotely at
-`https://freehire.me/api/v1/mcp` (Streamable HTTP). In Claude Code, install it as a plugin:
+The plugin connects to `https://freehire.me/api/v1/mcp/account` over Streamable HTTP.
+Sign in to freehire and approve the OAuth connection in your host. It includes job
+search and market research, plus your profile, saved jobs, application tracking,
+reports, alerts and account-enabled automatic applications. In Claude Code, install
+it as a plugin:
 
 ```
 /plugin install freehire --marketplace strelov1/freehire-mcp
 ```
 
-In other hosts, add the URL as a custom remote connector.
+In other OAuth-capable hosts, add the account URL as a custom remote connector and
+complete the sign-in flow. Account changes and application sending require your
+confirmation; automatic applications also require the account setting that permits
+connected agents to apply.
 
 ### ChatGPT plugin and claude.ai skill downloads
 
@@ -36,8 +42,9 @@ the `freehire-plugins-<commit>` artifact:
   It includes the portable plugin manifest, hosted MCP connection, icon, and the
   current `find-tech-jobs` skill.
 - `freehire-claude-skill-<version>.zip`: upload this ZIP in claude.ai under
-  **Customize → Skills**. Add `https://freehire.me/api/v1/mcp` as a remote
-  connector separately; uploading a skill does not configure an MCP connection.
+  **Customize → Skills**. Add `https://freehire.me/api/v1/mcp/account` as a remote
+  connector separately and complete OAuth sign-in; uploading a skill does not
+  configure an MCP connection.
 
 Run `npm run build:plugins` locally to write both archives to `dist/plugins/`.
 Packaging uses Python 3.9+ and its standard library; it needs no API credentials,
@@ -46,6 +53,11 @@ and all packaged metadata, assets and skills come from the checked-out commit.
 The hosted MCP connection discovers the live server's tools rather than bundling
 a fixed tool list. This workflow builds download artifacts; directory submission
 and publication remain separate steps.
+
+The hosted tools use names such as `search_jobs`, `get_job`, `get_profile`,
+`save_job`, `track_job` and `my_jobs`; discover their current schemas in your host.
+The hosted search accepts facet arrays inside `filters`. CV tailoring and experience
+bank tools in the local server below are not part of this account connection.
 
 ### Local server (npm)
 
@@ -69,7 +81,7 @@ Create the `fhk_…` key in the web app (freehire.me → account menu → **API 
 If you already use the freehire CLI (`freehire auth login`), you can **omit `env`** —
 the server reads the same `~/.freehire/creds.json`.
 
-## Authentication
+## Local server authentication
 
 The token and API base URL resolve with precedence
 **env → `~/.freehire/creds.json` → default `https://freehire.me`**:
@@ -83,7 +95,7 @@ The server only reads the credentials file (it never writes it — logging in st
 CLI's job). If no token is configured, tools return a clear "not authenticated" error
 rather than the server failing to start.
 
-## Tools
+## Local server tools
 
 | Tool | Purpose |
 |------|---------|

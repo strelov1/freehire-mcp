@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "freehire",
-  "description": "freehire plugins for Claude Code: IT job search over thousands of company career boards.",
+  "description": "freehire plugins for Claude Code: job search, market research and signed-in job tracking.",
   "owner": {
     "name": "ILYA STRELOV TECNOLOGIA DA INFORMACAO LTDA",
     "url": "https://freehire.me"
@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "freehire",
-      "description": "Search open IT jobs by stack, seniority, location, remote, salary and visa sponsorship; read full postings and see who is hiring.",
+      "description": "Connect your freehire account to search tech jobs, compare hiring demand, save roles, track applications and manage alerts.",
       "category": "productivity",
       "source": "./",
       "homepage": "https://freehire.me"

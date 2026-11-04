@@ -3,7 +3,17 @@
   "mcpServers": {
     "freehire": {
       "type": "streamable-http",
-      "url": "https://freehire.me/api/v1/mcp"
+      "url": "https://freehire.me/api/v1/mcp/account",
+      "extensions": {
+        "com.openai": {
+          "auth": {
+            "type": "oauth",
+            "client": {
+              "mode": "dcr"
+            }
+          }
+        }
+      }
     }
   }
 }

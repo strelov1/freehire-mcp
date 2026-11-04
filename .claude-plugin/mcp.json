@@ -2,7 +2,7 @@
   "mcpServers": {
     "freehire": {
       "type": "http",
-      "url": "https://freehire.me/api/v1/mcp"
+      "url": "https://freehire.me/api/v1/mcp/account"
     }
   }
 }

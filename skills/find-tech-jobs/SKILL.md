@@ -1,33 +1,50 @@
 ---
 name: find-tech-jobs
-description: Find open IT and software job postings with the freehire tools — search by technology, seniority, location, work mode, salary or visa sponsorship, read a posting in full, check it is still open, and look up pay, market size and which companies are hiring. Use when the user asks about open tech jobs, roles at a specific company, salaries, or who is hiring somewhere.
+description: Search tech jobs, inspect employers, compare salaries and hiring demand, and use a signed-in freehire account for profile-based matching, saved jobs, application tracking, job alerts and explicitly requested automatic applications. Use when the user asks for open tech roles, market research, their job-search progress or alerts.
 ---
 
 # Find tech jobs with freehire
 
-freehire aggregates IT job postings from many company career boards and job sites. Every result names the board it came from and links to the employer's original posting.
+Connect `https://freehire.me/api/v1/mcp/account` as a remote MCP connector and complete the host's OAuth sign-in flow. Use the tools and input schemas discovered from that connection. Uploading this skill alone does not connect an account. On an authentication error, ask the user to reconnect through the host's sign-in flow.
 
-## Tools
+freehire aggregates postings from company career boards and job sites. Preserve each result's source and original employer link.
 
-- `search_jobs` — find postings. Filter by `skills`, `seniority`, `work_mode`, `countries`, `cities`, `salary_min` + `salary_currency`, `visa_sponsorship`, `employment_type`, `posted_within_days`, `company_slugs`.
-- `get_job` — read one posting in full by the `slug` a search result carries.
-- `check_jobs_open` — confirm postings are still open, up to 50 slugs per call.
-- `similar_jobs` — more postings like one.
-- `salary_stats` / `job_market_stats` — pay percentiles; how many postings match and what they ask for.
-- `list_filter_values` — the values a filter accepts, with counts.
-- `search_companies` / `get_company` — employers by name or by where they hire.
+## Search and market research
 
-## How to search well
+- `get_profile` reads the signed-in candidate's saved preferences and skills. Use it when the user wants personalized matching; distinguish saved preferences from requirements they give now.
+- `facets` discovers valid filter names and values. Call it before building facet filters.
+- `search_jobs` searches postings. The account schema takes facet arrays inside `filters`, for example `{"query":"title:SRE OR title:\"site reliability\"","filters":{"work_mode":["remote"],"seniority":["senior"]},"limit":5}`. Consult the live schema for other arguments; values come from `facets`.
+- `get_job` reads a posting by its returned slug; `check_jobs_open` checks a shortlist (up to 50 slugs); `similar_jobs` finds related postings.
+- `salary_stats` reports pay percentiles; `job_market_stats` reports matching demand and requirements. Include sample sizes, currency and period when supplied; label missing salary data.
+- `list_filter_values` resolves one filter's vocabulary and aliases.
+- `search_companies` finds employers; `get_company` reads a company and its openings.
+- `search` and `fetch` provide the connector search-and-document interface. Use their discovered schemas when the host requests that workflow; retain citations and document links from their results.
+- `market_fit` measures a skill set against demand. Use its discovered schema, including nested `filters`, and separate evidence about the market from claims about the candidate.
 
-1. **Synonyms in one query.** A role has several names: join two or three with an uppercase `OR`, e.g. `title:SRE OR title:"site reliability"`.
-2. **Filters, not query.** Location, work mode, seniority and skills go in their filters, never in the query text.
-3. **Loosen one constraint at a time.** If suspiciously few results come back, drop one filter, search again, and tell the user which one you dropped.
-4. **Fix what was not understood.** If a result lists `ignored_params` (or, on the REST API, `ignored_values`), that filter or value was not recognised and the answer is not the one asked for — a misspelt skill matches nothing, so a total of 0 is a typo, not an empty market. Take the right value from `list_filter_values` and retry instead of telling the user nothing exists.
-5. **Shortlist from previews.** Screen with the search results; call `get_job` only for the final 5-10.
-6. **Recheck before presenting.** Run `check_jobs_open` on the shortlist and drop what has closed.
-7. Countries are ISO 3166-1 alpha-2 codes (`de`, `br`, `us`), not names. Geography filters are a union: `countries` plus `cities` returns postings matching any of them, not their intersection. Describe results accordingly.
-8. Present results as a table of title, company, location, posted date and link, naming the source board, so the user can apply on the employer's site.
+1. Put role synonyms in one query with uppercase `OR`, such as `title:SRE OR title:"site reliability"`. Put skills, geography, seniority and work mode in the appropriate filters.
+2. Read returned filter warnings and errors. Correct unknown names or values using `facets` or `list_filter_values`, then retry before drawing a conclusion from counts.
+3. If results are scarce, loosen one constraint at a time and tell the user which changed. Geography filters form a union: countries and cities widen to either place. Use the country-code casing and values the live vocabulary returns.
+4. Screen search descriptions first; use `get_job` for shortlisted postings that need fuller inspection. Check the final shortlist with `check_jobs_open` and omit closed postings.
+5. Present title, company, location, posted date, source and application link in a compact table. Describe uncertain freshness or missing data explicitly. Finish a market comparison only when the filters and sample behind each figure are clear.
 
-## Beyond search
+## Saved jobs, tracking and reports
 
-This hosted endpoint is anonymous and read-only. Saving jobs, tracking applications, job alerts and CV tailoring act on a freehire account: connect the signed-in endpoint (`https://freehire.me/api/v1/mcp/account`), or run the local server (`npx -y freehire-mcp`) with a personal API key, and those tools appear there.
+Read `my_jobs` for the user's tracked jobs. `save_job` and `unsave_job` change bookmarks; `track_job` changes application stage or note. `apply_job` records an application the user has already made; it does not send an application to an employer. `report_job` files a report about a posting.
+
+Before any write, show the specific job or record and the proposed change, then obtain the user's confirmation. An explicit request containing that same action and target counts as confirmation. Preserve existing values outside the requested change. Report success only after the tool confirms it; report failures without implying the change happened.
+
+## Job alerts
+
+Read `list_subscriptions` for current settings and `subscription_updates` for matched postings. For a requested new alert, preview its search and delivery channels before calling `subscribe`. Use `update_subscription` for changes or pausing, and `unsubscribe` for stopping an alert or channel, with the same confirmation rule as other writes.
+
+Follow the live schema for alert search arguments. Inspect existing settings before an update: some fields replace a whole filter or channel set. Confirm the resulting full set with the user, including removed channels or cleared filters. Use only delivery channels available to the account.
+
+## Automatic applications and screening answers
+
+OAuth sign-in grants access to tools; it is not permission to apply. Begin an automatic application only after an explicit request for the specific job. `auto_apply_start`, `auto_apply_retry`, `auto_apply_review` and `auto_apply_cancel` can act on attempts; inspect `auto_apply_get` or `auto_apply_list` for their current state first. Before an approval or retry that can send, show the employer, role and application contents for confirmation. A general request to find or save jobs does not authorize sending.
+
+The account must also enable “Let connected agents apply for me” under Account → Integrations → API keys. If a tool reports that setting is off, relay its instructions and wait for the user to enable it; the agent cannot turn it on. Respect every additional server gate and review state.
+
+Use `screening_answers_get` and `answer_bank_list` to inspect existing answers. `screening_answers_set`, `answer_bank_save` and `answer_bank_delete` require confirmation of the exact answer or deletion. Record candidate facts only from the user's statements or saved evidence; ask about unknown answers instead of inventing qualifications or consent.
+
+CV tailoring and experience-bank editing tools belong to the separate local server, not this hosted account connection. Use only the tools advertised by the active connection.
