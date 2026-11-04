@@ -10,7 +10,7 @@
 # and only tool calls fail, with a clear "not authenticated" error. That is what
 # makes introspection possible without handing a directory a credential.
 
-FROM node:22-alpine AS build
+FROM node:22.23.4-alpine AS build
 
 WORKDIR /app
 
@@ -26,7 +26,7 @@ RUN npm run build
 # or vitest, and they are the bulk of the tree.
 RUN npm prune --omit=dev
 
-FROM node:22-alpine
+FROM node:22.23.4-alpine
 
 WORKDIR /app
 ENV NODE_ENV=production
