@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parent.parent
 class PluginArchivesTest(unittest.TestCase):
     def test_release_metadata_and_claude_connection_match(self):
         package = json.loads((ROOT / "package.json").read_text())
-        self.assertEqual(package["version"], "1.0.3")
+        self.assertEqual(package["version"], "1.0.4")
         for filename in ("plugin.json", ".claude-plugin/plugin.json", "server.json"):
             manifest = json.loads((ROOT / filename).read_text())
             self.assertEqual(manifest["version"], package["version"], filename)
@@ -53,19 +53,27 @@ class PluginArchivesTest(unittest.TestCase):
             with ZipFile(output / "freehire-chatgpt-9.8.7.zip") as archive:
                 manifest = json.loads(archive.read("plugin.json"))
                 self.assertEqual(manifest["version"], "9.8.7")
-                self.assertEqual(manifest["name"], "freehire")
+                self.assertEqual(manifest["name"], "freehire-account")
                 interface = manifest["extensions"]["com.openai"]["interface"]
+                self.assertLessEqual(len(interface["shortDescription"]), 30)
+                cases = manifest["extensions"]["com.openai"]["review"]["test_cases"]
+                self.assertEqual(len(cases["positive"]), 5)
+                self.assertEqual(len(cases["negative"]), 3)
+                for case in cases["positive"]:
+                    for field in ("description", "prompt", "tools_triggered", "expected_behavior"):
+                        self.assertTrue(case[field].strip(), field)
+
                 self.assertEqual(
                     archive.read(interface["composerIcon"].removeprefix("./")),
                     (root / "assets/icon.png").read_bytes(),
                 )
                 mcp = json.loads(archive.read("mcp.json"))
                 self.assertEqual(
-                    mcp["mcpServers"]["freehire"]["url"],
+                    mcp["mcpServers"]["freehire-account"]["url"],
                     "https://freehire.me/api/v1/mcp/account",
                 )
                 self.assertEqual(
-                    mcp["mcpServers"]["freehire"]["extensions"]["com.openai"]["auth"],
+                    mcp["mcpServers"]["freehire-account"]["extensions"]["com.openai"]["auth"],
                     {"type": "oauth", "client": {"mode": "dcr"}},
                 )
                 self.assertEqual(
@@ -89,6 +97,17 @@ class PluginArchivesTest(unittest.TestCase):
                     archive.read("find-tech-jobs/SKILL.md"),
                     (root / "skills/find-tech-jobs/SKILL.md").read_bytes(),
                 )
+
+
+            invalid = json.loads((root / "plugin.json").read_text())
+            invalid["extensions"]["com.openai"]["interface"]["shortDescription"] = "x" * 31
+            (root / "plugin.json").write_text(json.dumps(invalid))
+            rejected = subprocess.run(
+                [sys.executable, str(root / "scripts/build-plugins.py")],
+                capture_output=True, text=True,
+            )
+            self.assertNotEqual(rejected.returncode, 0)
+            self.assertIn("shortDescription", rejected.stderr)
 
 
 if __name__ == "__main__":

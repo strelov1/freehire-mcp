@@ -37,6 +37,11 @@ and continues the original task. Other account changes and application sending r
 your confirmation; automatic applications also require the account setting that permits
 connected agents to apply.
 
+The ChatGPT package is `freehire-account` (display name **Freehire Account**), with a
+`freehire-account` MCP connection to the OAuth account endpoint. The existing published
+`freehire` plugin uses its original anonymous MCP URL; the portal does not allow changing
+that URL. Upload account-plugin updates to Freehire Account.
+
 ### ChatGPT plugin and claude.ai skill downloads
 
 Every push to `main`, pull request, and manual run of the

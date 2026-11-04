@@ -40,6 +40,8 @@ def main():
             plugin_entries[path.relative_to(ROOT).as_posix()] = path.read_bytes()
 
     interface = manifest["extensions"]["com.openai"]["interface"]
+    if len(interface["shortDescription"]) > 30:
+        raise ValueError("ChatGPT shortDescription must be at most 30 characters")
     for field in ("composerIcon", "logo"):
         if interface[field].removeprefix("./") not in plugin_entries:
             raise ValueError(f"Missing packaged {field}: {interface[field]}")
