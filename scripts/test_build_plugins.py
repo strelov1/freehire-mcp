@@ -12,6 +12,21 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 class PluginArchivesTest(unittest.TestCase):
+    def test_release_metadata_and_claude_connection_match(self):
+        package = json.loads((ROOT / "package.json").read_text())
+        self.assertEqual(package["version"], "1.0.2")
+        for filename in ("plugin.json", ".claude-plugin/plugin.json", "server.json"):
+            manifest = json.loads((ROOT / filename).read_text())
+            self.assertEqual(manifest["version"], package["version"], filename)
+        registry = json.loads((ROOT / "server.json").read_text())
+        self.assertEqual(registry["packages"][0]["version"], package["version"])
+        lock = json.loads((ROOT / "package-lock.json").read_text())
+        self.assertEqual(lock["version"], package["version"])
+        self.assertEqual(lock["packages"][""]["version"], package["version"])
+        claude = json.loads((ROOT / ".claude-plugin/mcp.json").read_text())
+        self.assertEqual(claude["mcpServers"]["freehire"]["url"],
+                         "https://freehire.me/api/v1/mcp/account")
+
     def test_archives_include_current_sources_and_package_version(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -47,7 +62,11 @@ class PluginArchivesTest(unittest.TestCase):
                 mcp = json.loads(archive.read("mcp.json"))
                 self.assertEqual(
                     mcp["mcpServers"]["freehire"]["url"],
-                    "https://freehire.me/api/v1/mcp",
+                    "https://freehire.me/api/v1/mcp/account",
+                )
+                self.assertEqual(
+                    mcp["mcpServers"]["freehire"]["extensions"]["com.openai"]["auth"],
+                    {"type": "oauth", "client": {"mode": "dcr"}},
                 )
                 self.assertEqual(
                     archive.read("skills/find-tech-jobs/references/current.md"),

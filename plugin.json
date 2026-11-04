@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "freehire",
-  "version": "0.8.0",
-  "description": "Search open IT job postings from thousands of company career boards, read any posting in full, and look up who is hiring. Read-only and anonymous.",
+  "version": "1.0.2",
+  "description": "Search tech jobs, compare salaries and hiring demand, and manage saved jobs, application tracking and alerts through your freehire account.",
   "author": {
     "name": "ILYA STRELOV TECNOLOGIA DA INFORMACAO LTDA",
     "url": "https://freehire.me"
@@ -10,13 +10,20 @@
   "homepage": "https://freehire.me",
   "repository": "https://github.com/strelov1/freehire-mcp",
   "license": "MIT",
-  "keywords": ["jobs", "job-search", "careers", "hiring", "recruiting", "mcp"],
+  "keywords": [
+    "jobs",
+    "job-search",
+    "careers",
+    "hiring",
+    "recruiting",
+    "mcp"
+  ],
   "extensions": {
     "com.openai": {
       "interface": {
         "displayName": "freehire",
-        "shortDescription": "Search tech jobs and salaries",
-        "longDescription": "Search open job postings by technology, seniority, location, work mode, salary or visa sponsorship. Read full postings, check whether jobs remain open, discover similar roles, and compare salaries and hiring demand. Results name their source and link to the employer's posting. Includes a job-search skill and connects to freehire's live, anonymous, read-only MCP server.",
+        "shortDescription": "Find jobs and track your search",
+        "longDescription": "Connect your freehire account to search tech jobs, read full postings, check availability, find similar roles, and compare salaries and hiring demand. Save jobs, track application stages and notes, and manage job alerts. Signed-in tools can change account data and, with your permission and account settings, submit applications. Includes a job-search skill; available tools are discovered from the live server.",
         "developerName": "ILYA STRELOV TECNOLOGIA DA INFORMACAO LTDA",
         "category": "Productivity",
         "capabilities": [],
