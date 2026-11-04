@@ -69,7 +69,7 @@
             {
               "description": "Exercise feedback once with clearly marked review samples in a dedicated demo account.",
               "prompt": "For this review sample only: request dictionary review for the missing skill ReviewOnlyUnlistedSkill20261104. Also report the missing capability of exporting my tracked job board to XML, with a short review-only summary. Do not claim either feature is implemented.",
-              "tools_triggered": "facets or list_filter_values, suggest_dictionary_term, report_problem",
+              "tools_triggered": "list_filter_values, suggest_dictionary_term, report_problem",
               "expected_behavior": "Check that the term is unresolved, preserve its original wording, and submit each distinct report once. Relay the returned queue state and report ID only after success; do not claim a new usable filter or XML export. Exclude credentials, CV content and contact details."
             }
           ],

@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 class PluginArchivesTest(unittest.TestCase):
     def test_release_metadata_and_claude_connection_match(self):
+        """Keep release metadata aligned with the account connection."""
         package = json.loads((ROOT / "package.json").read_text())
         self.assertEqual(package["version"], "1.0.4")
         for filename in ("plugin.json", ".claude-plugin/plugin.json", "server.json"):
@@ -28,6 +29,7 @@ class PluginArchivesTest(unittest.TestCase):
                          "https://freehire.me/api/v1/mcp/account")
 
     def test_archives_include_current_sources_and_package_version(self):
+        """Check current packaged files and reject an oversized subtitle."""
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             for name in ("package.json", "plugin.json", "mcp.json"):

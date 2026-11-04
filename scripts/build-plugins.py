@@ -23,6 +23,7 @@ def write_archive(path, entries):
 
 
 def main():
+    """Build hosted-plugin archives and validate their listing metadata."""
     package = json.loads((ROOT / "package.json").read_text())
     manifest = json.loads((ROOT / "plugin.json").read_text())
     manifest["version"] = package["version"]
