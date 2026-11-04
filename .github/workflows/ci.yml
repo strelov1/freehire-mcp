@@ -4,6 +4,10 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -17,3 +21,11 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm test
+      - run: npm run test:plugins
+      - run: npm run build:plugins
+      - name: Upload ChatGPT plugin and claude.ai skill
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: freehire-plugins-${{ github.sha }}
+          path: dist/plugins/*.zip
+          if-no-files-found: error

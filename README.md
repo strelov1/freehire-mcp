@@ -25,6 +25,28 @@ The read-only job search tools are also served remotely at
 
 In other hosts, add the URL as a custom remote connector.
 
+### ChatGPT plugin and claude.ai skill downloads
+
+Every push to `main`, pull request, and manual run of the
+[CI workflow](https://github.com/strelov1/freehire-mcp/actions/workflows/ci.yml)
+builds two ZIP files after the checks pass. Open a successful run and download
+the `freehire-plugins-<commit>` artifact:
+
+- `freehire-chatgpt-<version>.zip`: upload this ZIP as the ChatGPT plugin package.
+  It includes the portable plugin manifest, hosted MCP connection, icon, and the
+  current `find-tech-jobs` skill.
+- `freehire-claude-skill-<version>.zip`: upload this ZIP in claude.ai under
+  **Customize → Skills**. Add `https://freehire.me/api/v1/mcp` as a remote
+  connector separately; uploading a skill does not configure an MCP connection.
+
+Run `npm run build:plugins` locally to write both archives to `dist/plugins/`.
+Packaging uses Python 3.9+ and its standard library; it needs no API credentials,
+live server access, or sibling checkout. The version comes from `package.json`,
+and all packaged metadata, assets and skills come from the checked-out commit.
+The hosted MCP connection discovers the live server's tools rather than bundling
+a fixed tool list. This workflow builds download artifacts; directory submission
+and publication remain separate steps.
+
 ### Local server (npm)
 
 No global install needed — the host runs it via `npx`. Add it to your host's MCP
