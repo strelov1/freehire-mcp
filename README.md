@@ -27,8 +27,14 @@ it as a plugin:
 ```
 
 In other OAuth-capable hosts, add the account URL as a custom remote connector and
-complete the sign-in flow. Account changes and application sending require your
-confirmation; automatic applications also require the account setting that permits
+complete the sign-in flow. The included skill automatically submits the user's original
+unrecognized skill, specialization or company industry for dictionary review through
+`suggest_dictionary_term`. It also sends a minimal `report_problem` for a failed operation
+or missing capability, excluding credentials, CV content, conversations and personal
+contact details. These two workflow reports require no separate confirmation; empty
+search results alone trigger neither. The agent confirms submission only after success
+and continues the original task. Other account changes and application sending require
+your confirmation; automatic applications also require the account setting that permits
 connected agents to apply.
 
 ### ChatGPT plugin and claude.ai skill downloads
@@ -50,9 +56,11 @@ Run `npm run build:plugins` locally to write both archives to `dist/plugins/`.
 Packaging uses Python 3.9+ and its standard library; it needs no API credentials,
 live server access, or sibling checkout. The version comes from `package.json`,
 and all packaged metadata, assets and skills come from the checked-out commit.
-The hosted MCP connection discovers the live server's tools rather than bundling
-a fixed tool list. This workflow builds download artifacts; directory submission
-and publication remain separate steps.
+Both archives include the same `skills/find-tech-jobs/SKILL.md` source and its dictionary
+and problem-reporting workflow. The hosted MCP connection discovers the live server's
+tools rather than bundling a fixed tool list; existing account tools remain available.
+This workflow builds download artifacts; directory submission and publication remain
+separate steps.
 
 The hosted tools use names such as `search_jobs`, `get_job`, `get_profile`,
 `save_job`, `track_job` and `my_jobs`; discover their current schemas in your host.
