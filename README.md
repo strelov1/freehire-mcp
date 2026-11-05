@@ -81,6 +81,22 @@ the deployed unified backend and a dedicated reviewer OAuth grant.
 This workflow builds download artifacts; directory submission and publication remain
 separate steps.
 
+### Claude directory plugin bundle
+
+For the public Claude directory, submit this repository with **Plugin path** set
+to `plugins/claude` and track `main`. Pair the bundle with the existing Freehire
+MCP connector in the same Claude organization. The bundle includes the skill and
+the same hosted MCP URL, so it does not install the local npm server or its
+dependencies. The existing connector remains the source of authentication and
+tool health information.
+
+`npm run build:plugins` also refreshes the committed `plugins/claude` folder from
+the current skill, Claude manifest, connection configuration, README template
+and license. Commit that folder with changes to those sources. CI checks it
+before building the ZIPs and fails if the directory bundle is stale. After the
+initial directory review, Claude can scan new commits on the tracked branch;
+publishing still follows the listing's review settings.
+
 The hosted tools use names such as `search_jobs`, `get_job`, `get_profile`,
 `save_job`, `track_job` and `my_jobs`; discover their current schemas in your host.
 The unified hosted search uses top-level public filter fields; discover its live schema.

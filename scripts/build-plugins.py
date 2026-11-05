@@ -1,5 +1,6 @@
 """Package the hosted ChatGPT plugin and its companion claude.ai skill."""
 
+import argparse
 import json
 from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
@@ -25,6 +26,9 @@ def write_archive(path, entries):
 def main():
     """Build hosted-plugin archives and validate their listing metadata."""
     package = json.loads((ROOT / "package.json").read_text())
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check-claude-bundle", action="store_true")
+    args = parser.parse_args()
     manifest = json.loads((ROOT / "plugin.json").read_text())
     manifest["version"] = package["version"]
 
@@ -51,6 +55,31 @@ def main():
         path.relative_to(ROOT / "skills").as_posix(): path.read_bytes()
         for path in files_under(skills[0].parent)
     }
+    claude_manifest = json.loads((ROOT / ".claude-plugin/plugin.json").read_text())
+    claude_manifest["version"] = package["version"]
+    bundle_entries = {
+        ".claude-plugin/plugin.json": (json.dumps(claude_manifest, indent=2) + "\n").encode(),
+        ".claude-plugin/mcp.json": (ROOT / ".claude-plugin/mcp.json").read_bytes(),
+        "LICENSE": (ROOT / "LICENSE").read_bytes(),
+        "README.md": (ROOT / "docs/claude-plugin-readme.md").read_text().replace(
+            "{{DESCRIPTION}}", claude_manifest["description"]
+        ).encode(),
+        **{f"skills/{name}": content for name, content in skill_entries.items()},
+    }
+    bundle = ROOT / "plugins/claude"
+    existing = {path.relative_to(bundle).as_posix(): path.read_bytes()
+                for path in files_under(bundle)}
+    if args.check_claude_bundle:
+        if existing != bundle_entries:
+            raise ValueError("Claude directory bundle is stale; run npm run build:plugins and commit plugins/claude")
+        print("Claude directory bundle matches current sources")
+        return
+    for name in existing.keys() - bundle_entries.keys():
+        (bundle / name).unlink()
+    for name, content in bundle_entries.items():
+        destination = bundle / name
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(content)
     output = ROOT / "dist/plugins"
     output.mkdir(parents=True, exist_ok=True)
     for stale in output.glob("freehire-*.zip"):

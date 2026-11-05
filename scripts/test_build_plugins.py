@@ -34,9 +34,9 @@ class PluginArchivesTest(unittest.TestCase):
         """Check current packaged files and reject an oversized subtitle."""
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            for name in ("package.json", "plugin.json", "mcp.json"):
+            for name in ("package.json", "plugin.json", "mcp.json", "LICENSE"):
                 shutil.copyfile(ROOT / name, root / name)
-            for name in ("skills", "assets", "scripts"):
+            for name in ("skills", "assets", "scripts", ".claude-plugin", "docs"):
                 shutil.copytree(ROOT / name, root / name)
             package = json.loads((root / "package.json").read_text())
             package["version"] = "9.8.7"
@@ -50,6 +50,23 @@ class PluginArchivesTest(unittest.TestCase):
                 check=True, capture_output=True, text=True,
             )
             output = root / "dist/plugins"
+            bundle = root / "plugins/claude"
+            self.assertEqual(sorted(path.relative_to(bundle).as_posix()
+                                    for path in bundle.rglob("*") if path.is_file()), [
+                ".claude-plugin/mcp.json", ".claude-plugin/plugin.json", "LICENSE", "README.md",
+                "skills/find-tech-jobs/SKILL.md", "skills/find-tech-jobs/references/current.md",
+            ])
+            bundle_manifest = json.loads((bundle / ".claude-plugin/plugin.json").read_text())
+            self.assertEqual(bundle_manifest["version"], "9.8.7")
+            self.assertEqual((bundle / "skills/find-tech-jobs/references/current.md").read_bytes(),
+                             b"Current search guidance\n")
+            subprocess.run([sys.executable, str(root / "scripts/build-plugins.py"),
+                            "--check-claude-bundle"], check=True, capture_output=True)
+            (bundle / "README.md").write_text("stale")
+            stale = subprocess.run([sys.executable, str(root / "scripts/build-plugins.py"),
+                                    "--check-claude-bundle"], capture_output=True)
+            self.assertNotEqual(stale.returncode, 0)
+            self.assertEqual((bundle / "README.md").read_text(), "stale")
             self.assertEqual(
                 sorted(path.name for path in output.iterdir()),
                 ["freehire-chatgpt-9.8.7.zip", "freehire-claude-skill-9.8.7.zip"],
