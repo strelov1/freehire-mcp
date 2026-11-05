@@ -2,12 +2,18 @@
 
 [![LightNow capabilities](https://lightnow.ai/badge/me.freehire/freehire)](https://lightnow.ai/servers/me.freehire/freehire)
 
-An [MCP](https://modelcontextprotocol.io) server over the [freehire](https://freehire.me)
-job API. It lets any MCP host — Claude Desktop, Claude Code, or a compatible agent —
-**search, filter, and apply to IT jobs**. The hosted plugin connects through OAuth;
-the local npm server authenticates with a personal API key. Postings are crawled straight from company career boards — 3.3M+ open
-roles across 294K companies, normalized into one schema and tagged with stack, seniority,
-region and work mode ([live figures](https://freehire.me/open)).
+Search **4.9M+ unique open jobs from 437 sources** inside Claude, ChatGPT or your
+coding assistant. Find roles by stack, salary, seniority, work mode and location,
+inspect employers, and keep your shortlist and application progress in one place.
+The catalogue includes **680K+ company profiles and 178 ATS platforms**.
+Figures are from the exact catalogue snapshot on 5 November 2026
+([live figures](https://freehire.me/open)).
+
+The hosted [MCP](https://modelcontextprotocol.io) connection offers public search
+without an account and personal tools through OAuth at one address. The local npm
+server uses a personal API key and also provides CV and experience-bank tools.
+Saving or marking a job applied updates tracking; employer submission is a separate
+OAuth workflow that requires explicit permission and review.
 
 The local server mirrors the [freehire CLI](https://github.com/strelov1/freehire-cli):
 same API, same credentials, exposed as MCP tools instead of shell commands.
@@ -192,12 +198,11 @@ suggested name before reporting it.
 
 **Forwarded tools.** `check_jobs_open`, `similar_jobs`, `salary_stats`,
 `job_market_stats` and `list_filter_values` have no REST route, so they are forwarded to
-freehire's anonymous hosted MCP server (`/api/v1/mcp`, no key sent). The five job-alert
-tools are forwarded to the signed-in one (`/api/v1/mcp/account`) with your API key, so an
-alert made here is exactly the website's — the same saved search, channel rule and match
-ledger, not a second implementation of them. Their answers arrive in the hosted server's
-own words. Automatic applications (`auto_apply_*`) stay on the OAuth-signed-in endpoint
-and are not offered to an API key.
+the unified hosted MCP endpoint (`/api/v1/mcp`, no key sent for public reads). The five
+job-alert tools use the same endpoint with your full-access API key, so an alert made
+here is exactly the website's — the same saved search, channel rule and match ledger.
+Their answers arrive in the hosted server's own words. Automatic applications
+(`auto_apply_*`) require OAuth on that same endpoint and are not offered to an API key.
 
 **Searching well.** Join a role's two or three names with an uppercase `OR`
 (`title:SRE OR title:"site reliability"`), put location, work mode, seniority and skills in

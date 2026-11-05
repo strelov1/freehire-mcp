@@ -1,0 +1,13 @@
+{
+  "source": "https://freehire.me/api/v1/stats/catalog",
+  "computed_at": "2026-11-05T03:22:38.414465916Z",
+  "exact": true,
+  "unique_open_jobs": 4990891,
+  "companies": 684916,
+  "sources": 437,
+  "ats_platforms": 178,
+  "copy_rounding": {
+    "unique_open_jobs": "4.9M+",
+    "company_profiles": "680K+"
+  }
+}

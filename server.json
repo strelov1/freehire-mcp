@@ -2,9 +2,9 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "me.freehire/freehire",
   "title": "freehire",
-  "description": "freehire.me: search 3.3M+ IT jobs from 294K company boards, track applications, tailor CVs.",
-  "version": "1.0.5",
-  "websiteUrl": "https://freehire.me/cli",
+  "description": "Search 4.9M+ unique open jobs from 437 sources. Save jobs and track applications with AI.",
+  "version": "1.0.6",
+  "websiteUrl": "https://freehire.me/mcp",
   "repository": {
     "url": "https://github.com/strelov1/freehire-mcp",
     "source": "github"
@@ -29,7 +29,7 @@
     {
       "registryType": "npm",
       "identifier": "freehire-mcp",
-      "version": "1.0.5",
+      "version": "1.0.6",
       "transport": {
         "type": "stdio"
       },

@@ -10,7 +10,8 @@ Use this checkout's source and live tool schemas; local npm and hosted tool name
 
 ## Launch
 
-Node 18+ and Python 3.9+ are required. This project has no local database or
+Use Node 22.12+ and Python 3.9+ for checkout verification. The published stdio
+server supports Node 18+, but the development test runner needs a newer Node. This project has no local database or
 migrations: its stdio executable calls the hosted API; its hosted plugin uses an
 independently deployed Freehire backend. From the repository root:
 

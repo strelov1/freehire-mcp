@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "freehire",
   "display_name": "freehire.me",
-  "long_description": "An MCP server over [freehire.me](https://freehire.me), an open-source IT job aggregator that crawls postings straight from company career boards — 3.3M+ open roles across 294K companies, normalized into one schema and tagged with stack, seniority, region and work mode.\n\nSearch and filter the live market, score a skill list against real demand, read salary and market figures, read a posting in full and check it is still open, apply, track application stages, manage job alerts, and tailor a CV against a specific job. Search results carry each posting's full description as markdown, so a host can screen a result set without a follow-up call per hit.\n\nAuthentication uses a personal API key from freehire.me. If you already use the freehire.me CLI, the server reads the key it stored and no configuration is needed.",
+  "long_description": "Search 4.9M+ unique open jobs from 437 sources, with 680K+ company profiles and 178 ATS platforms in the catalogue. Find roles by stack, seniority, location, work mode and salary. Read full postings, compare advertised pay and track your shortlist. This local MCP server also supports CV tailoring through the freehire API.\n\nThe local server uses a personal API key, including a key already stored by the freehire CLI. For a hosted connection with public search and optional OAuth account access, use https://freehire.me/api/v1/mcp. Saving or marking a job applied updates tracking; it does not submit an application to an employer.\n\nCatalogue figures verified on 5 November 2026. Live figures: https://freehire.me/open.",
   "author": {
     "name": "strelov1",
     "url": "https://freehire.me"
@@ -42,7 +42,7 @@
     "freehire_token": {
       "type": "string",
       "title": "freehire.me API key",
-      "description": "Create one at freehire.me under the account menu -> API keys. Leave blank if the freehire.me CLI already stored a key in ~/.freehire/creds.json — the server reads that.",
+      "description": "Create one at freehire.me under the account menu -> API keys. Leave blank if the freehire.me CLI already stored a key in ~/.freehire/creds.json \u2014 the server reads that.",
       "sensitive": true,
       "required": false
     }

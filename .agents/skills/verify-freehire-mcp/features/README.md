@@ -13,5 +13,6 @@ missing service deployment or review credential blocks that entry point.
 - [Local npm connector](local.md): stdio initialization, version and tool discovery.
 - [Hosted catalogue](catalogue.md): canonical URL, public search and result inspection.
 - [OAuth account](oauth.md): mixed authentication, account reads and legacy migration.
+- [Setup guides](setup-guides.md): website, blog and directory instructions use the same canonical connection.
 
 Every feature uses the four sections below; extend the map when a user path changes.
