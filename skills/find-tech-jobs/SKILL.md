@@ -1,6 +1,6 @@
 ---
 name: find-tech-jobs
-description: Search tech jobs, inspect employers, compare salaries and hiring demand, and use a signed-in freehire account for profile-based matching, saved jobs, application tracking, job alerts and explicitly requested automatic applications. Use when the user asks for open tech roles, market research, their job-search progress or alerts, or encounters an unsupported dictionary term or a problem during that workflow.
+description: Search 4.9M+ unique open jobs from 437 sources, inspect employers, compare salaries and hiring demand, and use a signed-in freehire account for profile-based matching, saved jobs, application tracking, job alerts and explicitly requested automatic applications. Use when the user asks for open tech roles, market research, their job-search progress or alerts, or encounters an unsupported dictionary term or a problem during that workflow.
 ---
 
 # Find tech jobs with freehire

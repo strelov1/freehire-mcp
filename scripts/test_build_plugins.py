@@ -15,12 +15,13 @@ class PluginArchivesTest(unittest.TestCase):
     def test_release_metadata_and_claude_connection_match(self):
         """Keep release metadata aligned with the unified connection."""
         package = json.loads((ROOT / "package.json").read_text())
-        self.assertEqual(package["version"], "1.0.5")
+        self.assertEqual(package["version"], "1.0.6")
         for filename in ("plugin.json", ".claude-plugin/plugin.json", "server.json"):
             manifest = json.loads((ROOT / filename).read_text())
             self.assertEqual(manifest["version"], package["version"], filename)
         registry = json.loads((ROOT / "server.json").read_text())
         self.assertEqual(registry["packages"][0]["version"], package["version"])
+        self.assertLessEqual(len(registry["description"]), 100, "MCP registry schema description limit")
         self.assertEqual(registry["remotes"][0]["url"], "https://freehire.me/api/v1/mcp")
         lock = json.loads((ROOT / "package-lock.json").read_text())
         self.assertEqual(lock["version"], package["version"])

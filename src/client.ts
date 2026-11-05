@@ -406,14 +406,12 @@ export class Client {
   /** callHosted calls one tool on freehire's own hosted MCP server and returns its result
    * as served — for the tools whose logic lives only there.
    *
-   * `public` is the anonymous catalogue server (/api/v1/mcp): salary and market figures,
-   * similar postings, the liveness check and the filter vocabulary have no REST route of
-   * their own. `account` is the signed-in server (/api/v1/mcp/account), which admits a
-   * full-scope API key: job alerts are a saved search plus one subscription per channel,
-   * a channel rule and a match ledger, and re-deriving that here from the REST routes would
-   * be a second implementation that drifts from the website's. Forwarding keeps one.
+   * Both policies use /api/v1/mcp. `public` sends no credential for catalogue reads;
+   * `account` sends the caller's full-scope API key for job alerts. Forwarding keeps
+   * alerts on the website's saved search, channel rule and match ledger rather than
+   * re-implementing them here. OAuth-only tools remain unavailable to API keys.
    *
-   * Both servers are stateless, so one POST carrying tools/call is the whole exchange —
+   * The server is stateless, so one POST carrying tools/call is the whole exchange —
    * no initialize, no session. The answer may come back as JSON or as a one-event SSE
    * stream, depending on what the server prefers. */
   async callHosted(server: "public" | "account", name: string, args: Record<string, unknown>): Promise<HostedResult> {
@@ -422,7 +420,7 @@ export class Client {
       Accept: "application/json, text/event-stream",
     };
     if (server === "account") headers.Authorization = `Bearer ${this.token}`;
-    const path = server === "account" ? "/api/v1/mcp/account" : "/api/v1/mcp";
+    const path = "/api/v1/mcp";
     const body = JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/call", params: { name, arguments: args } });
 
     const resp = await this.fetchImpl(this.baseURL + path, { method: "POST", headers, body });

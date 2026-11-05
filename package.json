@@ -1,8 +1,8 @@
 {
   "name": "freehire-mcp",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "mcpName": "me.freehire/freehire",
-  "description": "freehire.me: search 3.3M+ IT jobs from 294K company boards, track applications, tailor CVs.",
+  "description": "Search 4.9M+ unique open jobs from 437 sources. Find your next role, compare salaries and track your job search with AI.",
   "type": "module",
   "bin": {
     "freehire-mcp": "dist/index.js"

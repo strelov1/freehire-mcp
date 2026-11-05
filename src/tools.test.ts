@@ -214,14 +214,14 @@ describe("registerTools", () => {
     expect((res.content as { text: string }[])[0].text).toBe('{"jobs":[]}');
   });
 
-  it("forwards an alert tool to the signed-in hosted server with the key, sending only given fields", async () => {
+  it("forwards an alert tool to the unified hosted server with the key, sending only given fields", async () => {
     apiBody = { jsonrpc: "2.0", id: 1, result: { content: [{ type: "text", text: '{"alert":{"id":7}}' }] } };
     const res = await mcp.callTool({
       name: "update_subscription",
       arguments: { id: 7, paused: true },
     });
     expect(res.isError).toBeFalsy();
-    expect(last.url).toBe("/api/v1/mcp/account");
+    expect(last.url).toBe("/api/v1/mcp");
     expect(last.auth).toBe("Bearer fhk_test");
     expect(JSON.parse(last.body).params).toEqual({ name: "update_subscription", arguments: { id: 7, paused: true } });
   });

@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "freehire",
-  "version": "1.0.5",
-  "description": "Search tech jobs, compare salaries and hiring demand, and manage saved jobs, application tracking and alerts through your freehire account.",
+  "version": "1.0.6",
+  "description": "Search 4.9M+ unique open jobs from 437 sources. Find your next role, compare salaries and track your job search with AI.",
   "author": {
     "name": "ILYA STRELOV TECNOLOGIA DA INFORMACAO LTDA",
     "url": "https://freehire.me"
@@ -22,8 +22,8 @@
     "com.openai": {
       "interface": {
         "displayName": "Freehire",
-        "shortDescription": "Find jobs and track progress",
-        "longDescription": "Search tech jobs, check posting availability, inspect employers, and compare salaries and hiring demand without signing in. Connect your freehire account with OAuth to save jobs, track applications, manage alerts and use account-enabled automatic applications with your permission. Includes a job-search skill; tools are discovered from the live server.",
+        "shortDescription": "Search 4.9M+ jobs with AI",
+        "longDescription": "Find your next tech role across 4.9M+ unique open jobs from 437 sources, with a catalogue of 680K+ company profiles and coverage of 178 ATS platforms. Search by stack, location, seniority, work mode and salary, inspect employers and compare hiring demand. Explore real postings and follow links to the original employer listing. Start searching without a freehire account. Connect with OAuth to save your shortlist, track applications and manage alerts in the same board you use on freehire.me. Explicitly requested automatic applications require a supported employer form, your account permissions and review before submission. Includes a job-search skill. Catalogue figures verified on 5 November 2026; live figures are at freehire.me/open.",
         "developerName": "ILYA STRELOV TECNOLOGIA DA INFORMACAO LTDA",
         "category": "Productivity",
         "capabilities": [],
@@ -93,7 +93,7 @@
         }
       },
       "publication": {
-        "release_notes": "Unifies public search and OAuth account capabilities in Freehire at one MCP endpoint. Includes saved jobs, tracking, alerts, dictionary suggestions and private problem reports. Personal tools require sign-in; application submission still requires explicit permission and account settings."
+        "release_notes": "Updates Freehire setup to one public/OAuth MCP address, adds clearer job-search copy with verified catalogue figures, and forwards local MCP alert tools to the canonical endpoint. Existing legacy connections remain supported."
       }
     }
   }
