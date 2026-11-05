@@ -24,6 +24,8 @@ jobs:
       - run: npm run build
       - run: npm test
       - run: npm run test:plugins
+      - name: Check Claude directory bundle matches release sources
+        run: python3 scripts/build-plugins.py --check-claude-bundle
       - run: npm run build:plugins
       - name: Verify downloads and MCP with Inspector CLI
         run: |

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "freehire": {
+      "type": "http",
+      "url": "https://freehire.me/api/v1/mcp"
+    }
+  }
+}

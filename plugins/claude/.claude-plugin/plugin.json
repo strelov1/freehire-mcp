@@ -1,0 +1,21 @@
+{
+  "name": "freehire",
+  "version": "1.0.6",
+  "description": "Search 4.9M+ unique open jobs from 437 sources. Find your next role, compare salaries and track your job search with AI.",
+  "author": {
+    "name": "ILYA STRELOV TECNOLOGIA DA INFORMACAO LTDA",
+    "url": "https://freehire.me"
+  },
+  "homepage": "https://freehire.me",
+  "repository": "https://github.com/strelov1/freehire-mcp",
+  "license": "MIT",
+  "skills": "./skills/",
+  "mcpServers": "./.claude-plugin/mcp.json",
+  "keywords": [
+    "jobs",
+    "job-search",
+    "careers",
+    "hiring",
+    "mcp"
+  ]
+}
