@@ -78,7 +78,9 @@ The helper uses a temporary Inspector store and private config, disables browser
 auto-open and preserves only redacted assertions/exit codes. `--strict` schema
 errors fail; portability warnings are recorded separately. Optional `--npm-cache`
 reuses an explicitly selected cache; otherwise its scratch cache is removed.
-Anonymous personal-tool driving expects `auth_required`, not silent success.
+Anonymous personal-tool driving expects `auth_required`, or Inspector's
+`tool_is_error` with the canonical OAuth challenge in the returned MCP result.
+An unrelated tool error or silent success fails verification.
 The recipe uses a POSIX process group to terminate only its children on timeout.
 
 For real host UI verification use the browser recipes in the feature map.

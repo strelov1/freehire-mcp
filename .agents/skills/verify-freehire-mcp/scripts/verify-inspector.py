@@ -66,7 +66,22 @@ with tempfile.TemporaryDirectory(prefix='freehire-inspector-') as scratch:
                     envelope = candidate
                     break
             code = envelope.get('error', {}).get('code')
-            check(name, process.returncode != 0 and code == 'auth_required', exit_code=process.returncode, error_code=code)
+            # Mixed auth returns a tool-level challenge after successful discovery.
+            # Inspector emits that result on stdout, then exits with tool_is_error.
+            challenge = False
+            if code == 'tool_is_error':
+                try:
+                    result = json.loads(stdout).get('result', {})
+                    challenges = result.get('_meta', {}).get('mcp/www_authenticate', [])
+                    challenge = result.get('isError') is True and isinstance(challenges, list) and any(
+                        isinstance(value, str)
+                        and 'resource_metadata="https://freehire.me/.well-known/oauth-protected-resource/api/v1/mcp"' in value
+                        and 'error="insufficient_scope"' in value
+                        for value in challenges)
+                except (json.JSONDecodeError, AttributeError):
+                    pass
+            check(name, process.returncode != 0 and (code == 'auth_required' or challenge),
+                  exit_code=process.returncode, error_code=code, tool_oauth_challenge=challenge)
         else:
             check(name, process.returncode == 0, exit_code=process.returncode)
             data = json.loads(stdout)
@@ -97,7 +112,8 @@ with tempfile.TemporaryDirectory(prefix='freehire-inspector-') as scratch:
                 token = json.loads(args.token_file.read_text())['access_token']
                 check('oauth-token', isinstance(token, str) and token.startswith('fhm_'))
                 config = scratch / 'mcp.private.json'
-                with config.open('x', opener=lambda file, flags: os.open(file, flags, 0o600)) as output:
+                descriptor = os.open(config, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+                with os.fdopen(descriptor, 'w') as output:
                     json.dump({'mcpServers': {'freehire': {'type': 'http', 'url': endpoint,
                               'headers': {'Authorization': 'Bearer ' + token}}}}, output)
                 private = run('oauth-my-jobs', ['--config', str(config), '--server', 'freehire'],
