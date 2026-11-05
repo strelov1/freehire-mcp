@@ -30,7 +30,7 @@ to /mcp/account may explain compatibility but must not be a new-setup command.
 Run the hosted SDK/Inspector recipes in the main skill to verify that the documented
 URL still offers both public search and OAuth account reads. Local stdio forwarding
 must use that same path for both policies, sending no key for public reads and the
-configured key only for allowed personal operations. Run `npm test` for this contract.
+configured key only for allowed personal operations. Use Node 22.12+ for the development test runner, then run `npm test` for this contract.
 
 Directory tests need an authorized publisher session. Capture current settings,
 server tool discovery, submitted changes and actual review status separately.
