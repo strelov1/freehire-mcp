@@ -25,6 +25,18 @@ jobs:
       - run: npm test
       - run: npm run test:plugins
       - run: npm run build:plugins
+      - name: Verify downloads and MCP with Inspector CLI
+        run: |
+          python3 .agents/skills/verify-freehire-mcp/scripts/verify-archives.py --evidence dist/verification
+          node .agents/skills/verify-freehire-mcp/scripts/verify-mcp.mjs local --evidence dist/verification
+          python3 .agents/skills/verify-freehire-mcp/scripts/verify-inspector.py local --evidence dist/verification --npm-cache "$RUNNER_TEMP/freehire-inspector-npm-cache"
+      - name: Upload verification evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: freehire-verification-${{ github.sha }}
+          path: dist/verification/*.json
+          if-no-files-found: warn
       - name: Upload ChatGPT plugin and claude.ai skill
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:

@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
-  "name": "freehire-account",
-  "version": "1.0.4",
+  "name": "freehire",
+  "version": "1.0.5",
   "description": "Search tech jobs, compare salaries and hiring demand, and manage saved jobs, application tracking and alerts through your freehire account.",
   "author": {
     "name": "ILYA STRELOV TECNOLOGIA DA INFORMACAO LTDA",
@@ -21,9 +21,9 @@
   "extensions": {
     "com.openai": {
       "interface": {
-        "displayName": "Freehire Account",
+        "displayName": "Freehire",
         "shortDescription": "Find jobs and track progress",
-        "longDescription": "Connect your freehire account to search tech jobs, read full postings, check availability, find similar roles, and compare salaries and hiring demand. Save jobs, track application stages and notes, and manage job alerts. Signed-in tools can change account data and, with your permission and account settings, submit applications. Includes a job-search skill; available tools are discovered from the live server.",
+        "longDescription": "Search tech jobs, check posting availability, inspect employers, and compare salaries and hiring demand without signing in. Connect your freehire account with OAuth to save jobs, track applications, manage alerts and use account-enabled automatic applications with your permission. Includes a job-search skill; tools are discovered from the live server.",
         "developerName": "ILYA STRELOV TECNOLOGIA DA INFORMACAO LTDA",
         "category": "Productivity",
         "capabilities": [],
@@ -45,7 +45,7 @@
             {
               "description": "Discover open roles and inspect employers using live catalogue data.",
               "prompt": "Find up to three remote Go backend jobs in Germany. Show the company, original application link and whether each posting is still open. Inspect the first employer and show a similar role if available.",
-              "tools_triggered": "facets, search_jobs, check_jobs_open, get_job, get_company, similar_jobs",
+              "tools_triggered": "list_filter_values, search_jobs, check_jobs_open, get_job, get_company, similar_jobs",
               "expected_behavior": "Use supported filter values and live postings, preserve employer/source links, omit closed jobs, and state when no matches or similar roles are available. Do not change account data."
             },
             {
@@ -93,7 +93,7 @@
         }
       },
       "publication": {
-        "release_notes": "Initial Freehire Account release with OAuth job search, market research, saved jobs, application tracking and alerts. Includes supported automatic applications with explicit approval, dictionary suggestions, private problem reports and the find-tech-jobs skill."
+        "release_notes": "Unifies public search and OAuth account capabilities in Freehire at one MCP endpoint. Includes saved jobs, tracking, alerts, dictionary suggestions and private problem reports. Personal tools require sign-in; application submission still requires explicit permission and account settings."
       }
     }
   }

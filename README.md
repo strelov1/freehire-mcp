@@ -14,10 +14,10 @@ same API, same credentials, exposed as MCP tools instead of shell commands.
 
 ## Install
 
-### Hosted account connection (OAuth)
+### Hosted connection (public search and OAuth)
 
-The plugin connects to `https://freehire.me/api/v1/mcp/account` over Streamable HTTP.
-Sign in to freehire and approve the OAuth connection in your host. It includes job
+The plugin connects to `https://freehire.me/api/v1/mcp` over Streamable HTTP.
+Public catalogue tools work without sign-in. Connect your account with OAuth for personal tools. It includes job
 search and market research, plus your profile, saved jobs, application tracking,
 reports, alerts and account-enabled automatic applications. In Claude Code, install
 it as a plugin:
@@ -37,10 +37,10 @@ and continues the original task. Other account changes and application sending r
 your confirmation; automatic applications also require the account setting that permits
 connected agents to apply.
 
-The ChatGPT package is `freehire-account` (display name **Freehire Account**), with a
-`freehire-account` MCP connection to the OAuth account endpoint. The existing published
-`freehire` plugin uses its original anonymous MCP URL; the portal does not allow changing
-that URL. Upload account-plugin updates to Freehire Account.
+The ChatGPT package is `freehire` (display name **Freehire**), with a `freehire`
+MCP connection to the original URL and mixed public/OAuth authentication. Upload
+updates to the existing Freehire plugin. The separate Freehire Account plugin and
+its `/api/v1/mcp/account` endpoint remain available during client migration.
 
 ### ChatGPT plugin and claude.ai skill downloads
 
@@ -53,7 +53,7 @@ the `freehire-plugins-<commit>` artifact:
   It includes the portable plugin manifest, hosted MCP connection, icon, and the
   current `find-tech-jobs` skill.
 - `freehire-claude-skill-<version>.zip`: upload this ZIP in claude.ai under
-  **Customize → Skills**. Add `https://freehire.me/api/v1/mcp/account` as a remote
+  **Customize → Skills**. Add `https://freehire.me/api/v1/mcp` as a remote
   connector separately and complete OAuth sign-in; uploading a skill does not
   configure an MCP connection.
 
@@ -64,12 +64,19 @@ and all packaged metadata, assets and skills come from the checked-out commit.
 Both archives include the same `skills/find-tech-jobs/SKILL.md` source and its dictionary
 and problem-reporting workflow. The hosted MCP connection discovers the live server's
 tools rather than bundling a fixed tool list; existing account tools remain available.
+The project-local `.agents/skills/verify-freehire-mcp` skill verifies the archives,
+local stdio discovery, hosted public access and OAuth using real transports and
+the official MCP Inspector CLI. CI runs the archive/local checks and uploads the
+`freehire-verification-<commit>` proof artifact. Hosted checks additionally need
+the deployed unified backend and a dedicated reviewer OAuth grant.
+
 This workflow builds download artifacts; directory submission and publication remain
 separate steps.
 
 The hosted tools use names such as `search_jobs`, `get_job`, `get_profile`,
 `save_job`, `track_job` and `my_jobs`; discover their current schemas in your host.
-The hosted search accepts facet arrays inside `filters`. CV tailoring and experience
+The unified hosted search uses top-level public filter fields; discover its live schema.
+Personal tools may use nested `filters`, so inspect each tool separately. CV tailoring and experience
 bank tools in the local server below are not part of this account connection.
 
 ### Local server (npm)

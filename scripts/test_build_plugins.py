@@ -13,9 +13,9 @@ ROOT = Path(__file__).resolve().parent.parent
 
 class PluginArchivesTest(unittest.TestCase):
     def test_release_metadata_and_claude_connection_match(self):
-        """Keep release metadata aligned with the account connection."""
+        """Keep release metadata aligned with the unified connection."""
         package = json.loads((ROOT / "package.json").read_text())
-        self.assertEqual(package["version"], "1.0.4")
+        self.assertEqual(package["version"], "1.0.5")
         for filename in ("plugin.json", ".claude-plugin/plugin.json", "server.json"):
             manifest = json.loads((ROOT / filename).read_text())
             self.assertEqual(manifest["version"], package["version"], filename)
@@ -26,7 +26,7 @@ class PluginArchivesTest(unittest.TestCase):
         self.assertEqual(lock["packages"][""]["version"], package["version"])
         claude = json.loads((ROOT / ".claude-plugin/mcp.json").read_text())
         self.assertEqual(claude["mcpServers"]["freehire"]["url"],
-                         "https://freehire.me/api/v1/mcp/account")
+                         "https://freehire.me/api/v1/mcp")
 
     def test_archives_include_current_sources_and_package_version(self):
         """Check current packaged files and reject an oversized subtitle."""
@@ -55,7 +55,7 @@ class PluginArchivesTest(unittest.TestCase):
             with ZipFile(output / "freehire-chatgpt-9.8.7.zip") as archive:
                 manifest = json.loads(archive.read("plugin.json"))
                 self.assertEqual(manifest["version"], "9.8.7")
-                self.assertEqual(manifest["name"], "freehire-account")
+                self.assertEqual(manifest["name"], "freehire")
                 interface = manifest["extensions"]["com.openai"]["interface"]
                 self.assertLessEqual(len(interface["shortDescription"]), 30)
                 cases = manifest["extensions"]["com.openai"]["review"]["test_cases"]
@@ -71,12 +71,12 @@ class PluginArchivesTest(unittest.TestCase):
                 )
                 mcp = json.loads(archive.read("mcp.json"))
                 self.assertEqual(
-                    mcp["mcpServers"]["freehire-account"]["url"],
-                    "https://freehire.me/api/v1/mcp/account",
+                    mcp["mcpServers"]["freehire"]["url"],
+                    "https://freehire.me/api/v1/mcp",
                 )
                 self.assertEqual(
-                    mcp["mcpServers"]["freehire-account"]["extensions"]["com.openai"]["auth"],
-                    {"type": "oauth", "client": {"mode": "dcr"}},
+                    mcp["mcpServers"]["freehire"]["extensions"]["com.openai"]["auth"],
+                    {"type": "mixed", "client": {"mode": "dcr"}},
                 )
                 self.assertEqual(
                     archive.read("skills/find-tech-jobs/references/current.md"),
