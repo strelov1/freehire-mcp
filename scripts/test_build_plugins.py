@@ -53,11 +53,14 @@ class PluginArchivesTest(unittest.TestCase):
             bundle = root / "plugins/claude"
             self.assertEqual(sorted(path.relative_to(bundle).as_posix()
                                     for path in bundle.rglob("*") if path.is_file()), [
-                ".claude-plugin/mcp.json", ".claude-plugin/plugin.json", "LICENSE", "README.md",
+                ".claude-plugin/mcp.json", ".claude-plugin/plugin.json", "LICENSE", "README.md", "assets/icon.png",
                 "skills/find-tech-jobs/SKILL.md", "skills/find-tech-jobs/references/current.md",
             ])
             bundle_manifest = json.loads((bundle / ".claude-plugin/plugin.json").read_text())
             self.assertEqual(bundle_manifest["version"], "9.8.7")
+            self.assertEqual(bundle_manifest["privacyPolicyUrl"], "https://freehire.me/privacy")
+            self.assertEqual((bundle / bundle_manifest["icon"]).read_bytes(),
+                             (root / "assets/icon.png").read_bytes())
             self.assertEqual((bundle / "skills/find-tech-jobs/references/current.md").read_bytes(),
                              b"Current search guidance\n")
             subprocess.run([sys.executable, str(root / "scripts/build-plugins.py"),
