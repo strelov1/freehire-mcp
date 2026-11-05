@@ -60,6 +60,7 @@ def main():
     bundle_entries = {
         ".claude-plugin/plugin.json": (json.dumps(claude_manifest, indent=2) + "\n").encode(),
         ".claude-plugin/mcp.json": (ROOT / ".claude-plugin/mcp.json").read_bytes(),
+        "assets/icon.png": (ROOT / "assets/icon.png").read_bytes(),
         "LICENSE": (ROOT / "LICENSE").read_bytes(),
         "README.md": (ROOT / "docs/claude-plugin-readme.md").read_text().replace(
             "{{DESCRIPTION}}", claude_manifest["description"]

@@ -9,6 +9,8 @@
   "homepage": "https://freehire.me",
   "repository": "https://github.com/strelov1/freehire-mcp",
   "license": "MIT",
+  "icon": "./assets/icon.png",
+  "privacyPolicyUrl": "https://freehire.me/privacy",
   "skills": "./skills/",
   "mcpServers": "./.claude-plugin/mcp.json",
   "keywords": [
