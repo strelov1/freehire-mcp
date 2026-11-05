@@ -26,8 +26,10 @@ it as a plugin:
 /plugin install freehire --marketplace strelov1/freehire-mcp
 ```
 
-In other OAuth-capable hosts, add the account URL as a custom remote connector and
-complete the sign-in flow. The included skill automatically submits the user's original
+In other OAuth-capable hosts, add the canonical URL as a custom remote connector and
+complete the sign-in flow. In Claude Code, use `/mcp` to select Freehire and authenticate
+before personal calls; for a custom server named `freehire`, use `claude mcp login freehire`.
+Do not assume every host opens sign-in automatically from a tool-level challenge. The included skill automatically submits the user's original
 unrecognized skill, specialization or company industry for dictionary review through
 `suggest_dictionary_term`. It also sends a minimal `report_problem` for a failed operation
 or missing capability, excluding credentials, CV content, conversations and personal

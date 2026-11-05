@@ -44,8 +44,8 @@ function signature(tools) { return createHash('sha256').update(JSON.stringify(to
 let client;
 let transport;
 try {
-  check('built-local-entry', fs.existsSync(path.join(root, 'dist/index.js')));
   if (mode === 'local') {
+    check('built-local-entry', fs.existsSync(path.join(root, 'dist/index.js')));
     transport = new StdioClientTransport({ command: process.execPath, args: [path.join(root, 'dist/index.js')], cwd: root, stderr: 'pipe',
       env: { ...process.env, FREEHIRE_TOKEN: 'verification-invalid-key', FREEHIRE_API_URL: 'http://127.0.0.1:1' } });
     client = new Client({ name: 'freehire-verification', version: '1' });

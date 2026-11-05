@@ -21,6 +21,7 @@ class PluginArchivesTest(unittest.TestCase):
             self.assertEqual(manifest["version"], package["version"], filename)
         registry = json.loads((ROOT / "server.json").read_text())
         self.assertEqual(registry["packages"][0]["version"], package["version"])
+        self.assertEqual(registry["remotes"][0]["url"], "https://freehire.me/api/v1/mcp")
         lock = json.loads((ROOT / "package-lock.json").read_text())
         self.assertEqual(lock["version"], package["version"])
         self.assertEqual(lock["packages"][""]["version"], package["version"])

@@ -54,13 +54,23 @@ with tempfile.TemporaryDirectory(prefix='freehire-inspector-') as scratch:
                 os.killpg(process.pid, signal.SIGKILL)
                 process.communicate()
             check(name, False, reason='Inspector timed out; owned process group terminated')
-        data = json.loads(stdout)
-        payload = data.get('result', data)
+        payload = None
         if want_error:
-            code = data.get('error', {}).get('code')
+            envelope = {}
+            for line in reversed(stderr.splitlines()):
+                try:
+                    candidate = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if isinstance(candidate, dict) and isinstance(candidate.get('error'), dict):
+                    envelope = candidate
+                    break
+            code = envelope.get('error', {}).get('code')
             check(name, process.returncode != 0 and code == 'auth_required', exit_code=process.returncode, error_code=code)
         else:
             check(name, process.returncode == 0, exit_code=process.returncode)
+            data = json.loads(stdout)
+            payload = data.get('result', data)
         counts = re.search(r'(\d+) errors?, (\d+) warnings? across', stderr)
         if counts:
             proof['checks'][-1]['schema_errors'] = int(counts[1])
