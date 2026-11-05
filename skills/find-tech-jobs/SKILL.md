@@ -17,14 +17,14 @@ freehire aggregates postings from company career boards and job sites. Preserve 
 - `get_job` reads a posting by its returned slug; `check_jobs_open` checks a shortlist (up to 50 slugs); `similar_jobs` finds related postings.
 - `salary_stats` reports pay percentiles; `job_market_stats` reports matching demand and requirements. Include sample sizes, currency and period when supplied; label missing salary data.
 - `list_filter_values` resolves one filter's vocabulary and aliases.
-- `search_companies` finds employers; `get_company` reads a company and its openings.
+- `search_companies` finds employers; `get_company` reads employer details and open-posting counts.
 - `search` and `fetch` provide the connector search-and-document interface. Use their discovered schemas when the host requests that workflow; retain citations and document links from their results.
 - `market_fit` measures a skill set against demand. Use its discovered schema, including nested `filters`, and separate evidence about the market from claims about the candidate.
 
 1. Put role synonyms in one query with uppercase `OR`, such as `title:SRE OR title:"site reliability"`. Put skills, geography, seniority and work mode in the appropriate filters.
 2. Read returned filter warnings and errors. Resolve unknown names or values using `list_filter_values` or signed-in `facets`. For an unrecognized skill, specialization or company industry, follow the dictionary workflow below, then retry with supported filters before drawing a conclusion from counts.
 3. If results are scarce, loosen one constraint at a time and tell the user which changed. Geography filters form a union: countries and cities widen to either place. Use the country-code casing and values the live vocabulary returns.
-4. Screen search descriptions first; use `get_job` for shortlisted postings that need fuller inspection. Check the final shortlist with `check_jobs_open` and omit closed postings.
+4. Screen search previews first; use `get_job` for shortlisted postings that need fuller inspection. Check the final shortlist with `check_jobs_open` and omit closed postings.
 5. Present title, company, location, posted date, source and application link in a compact table. Describe uncertain freshness or missing data explicitly. Finish a market comparison only when the filters and sample behind each figure are clear.
 
 ## Dictionary suggestions and problem reports
