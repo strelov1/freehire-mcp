@@ -5,26 +5,26 @@ description: Search tech jobs, inspect employers, compare salaries and hiring de
 
 # Find tech jobs with freehire
 
-Connect `https://freehire.me/api/v1/mcp/account` as a remote MCP connector and complete the host's OAuth sign-in flow. Use the tools and input schemas discovered from that connection. Uploading this skill alone does not connect an account. On an authentication error, ask the user to reconnect through the host's sign-in flow.
+Connect `https://freehire.me/api/v1/mcp` as a remote MCP connector. Public catalogue tools work without signing in; use the host's OAuth sign-in flow when a personal tool requests it. Use the tools and input schemas discovered from that connection. Uploading this skill alone does not connect an account. On an authentication error, ask the user to reconnect through the host's sign-in flow.
 
 freehire aggregates postings from company career boards and job sites. Preserve each result's source and original employer link.
 
 ## Search and market research
 
 - `get_profile` reads the signed-in candidate's saved preferences and skills. Use it when the user wants personalized matching; distinguish saved preferences from requirements they give now.
-- `facets` discovers valid filter names and values. Call it before building facet filters.
-- `search_jobs` searches postings. The account schema takes facet arrays inside `filters`, for example `{"query":"title:SRE OR title:\"site reliability\"","filters":{"work_mode":["remote"],"seniority":["senior"]},"limit":5}`. Consult the live schema for other arguments; values come from `facets`.
+- `list_filter_values` discovers supported filter values without sign-in. `facets` provides the signed-in catalogue vocabulary.
+- `search_jobs` searches postings using the live public schema: filters are top-level fields, for example `{"query":"title:SRE OR title:\"site reliability\"","work_mode":["remote"],"seniority":["senior"],"limit":5}`. Discover accepted names and values with `list_filter_values`; personal tools such as `market_fit` and alert tools can have different filter schemas.
 - `get_job` reads a posting by its returned slug; `check_jobs_open` checks a shortlist (up to 50 slugs); `similar_jobs` finds related postings.
 - `salary_stats` reports pay percentiles; `job_market_stats` reports matching demand and requirements. Include sample sizes, currency and period when supplied; label missing salary data.
 - `list_filter_values` resolves one filter's vocabulary and aliases.
-- `search_companies` finds employers; `get_company` reads a company and its openings.
+- `search_companies` finds employers; `get_company` reads employer details and open-posting counts.
 - `search` and `fetch` provide the connector search-and-document interface. Use their discovered schemas when the host requests that workflow; retain citations and document links from their results.
 - `market_fit` measures a skill set against demand. Use its discovered schema, including nested `filters`, and separate evidence about the market from claims about the candidate.
 
 1. Put role synonyms in one query with uppercase `OR`, such as `title:SRE OR title:"site reliability"`. Put skills, geography, seniority and work mode in the appropriate filters.
-2. Read returned filter warnings and errors. Resolve unknown names or values using `facets` or `list_filter_values`. For an unrecognized skill, specialization or company industry, follow the dictionary workflow below, then retry with supported filters before drawing a conclusion from counts.
+2. Read returned filter warnings and errors. Resolve unknown names or values using `list_filter_values` or signed-in `facets`. For an unrecognized skill, specialization or company industry, follow the dictionary workflow below, then retry with supported filters before drawing a conclusion from counts.
 3. If results are scarce, loosen one constraint at a time and tell the user which changed. Geography filters form a union: countries and cities widen to either place. Use the country-code casing and values the live vocabulary returns.
-4. Screen search descriptions first; use `get_job` for shortlisted postings that need fuller inspection. Check the final shortlist with `check_jobs_open` and omit closed postings.
+4. Screen search previews first; use `get_job` for shortlisted postings that need fuller inspection. Check the final shortlist with `check_jobs_open` and omit closed postings.
 5. Present title, company, location, posted date, source and application link in a compact table. Describe uncertain freshness or missing data explicitly. Finish a market comparison only when the filters and sample behind each figure are clear.
 
 ## Dictionary suggestions and problem reports

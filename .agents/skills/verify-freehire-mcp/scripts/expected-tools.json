@@ -1,0 +1,15 @@
+{
+  "public": [
+    "check_jobs_open", "fetch", "get_company", "get_job", "job_market_stats",
+    "list_filter_values", "salary_stats", "search", "search_companies", "search_jobs", "similar_jobs"
+  ],
+  "oauth": [
+    "answer_bank_delete", "answer_bank_list", "answer_bank_save", "apply_job",
+    "auto_apply_cancel", "auto_apply_get", "auto_apply_list", "auto_apply_retry",
+    "auto_apply_review", "auto_apply_start", "facets", "get_profile",
+    "list_subscriptions", "market_fit", "my_jobs", "report_job", "report_problem",
+    "save_job", "screening_answers_get", "screening_answers_set", "subscribe",
+    "subscription_updates", "suggest_dictionary_term", "track_job", "unsave_job",
+    "unsubscribe", "update_subscription"
+  ]
+}
