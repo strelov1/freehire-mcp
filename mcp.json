@@ -7,7 +7,7 @@
       "extensions": {
         "com.openai": {
           "auth": {
-            "type": "mixed",
+            "type": "oauth",
             "client": {
               "mode": "dcr"
             }

@@ -199,13 +199,13 @@ describe("registerTools", () => {
     expect(last.url).toBe("/api/v1/me/contributions");
   });
 
-  it("forwards a catalogue tool to the anonymous hosted server, without the key", async () => {
+  it("forwards a catalogue tool to the hosted server with the key, which admits no anonymous call", async () => {
     apiBody = { jsonrpc: "2.0", id: 1, result: { content: [{ type: "text", text: '{"jobs":[]}' }] } };
     const res = await mcp.callTool({ name: "check_jobs_open", arguments: { slugs: ["a-1", "b-2"] } });
     expect(res.isError).toBeFalsy();
     expect(last.method).toBe("POST");
     expect(last.url).toBe("/api/v1/mcp");
-    expect(last.auth).toBeUndefined();
+    expect(last.auth).toBe("Bearer fhk_test");
     expect(JSON.parse(last.body)).toEqual({
       jsonrpc: "2.0",
       id: 1,

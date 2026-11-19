@@ -32,7 +32,7 @@ for target in ('chatgpt', 'claude-skill'):
             assert json.loads(archive.read('mcp.json')) == json.loads((ROOT / 'mcp.json').read_text())
             config = json.loads(archive.read('mcp.json'))['mcpServers']['freehire']
             assert config['url'] == 'https://freehire.me/api/v1/mcp'
-            assert config['extensions']['com.openai']['auth'] == {'type': 'mixed', 'client': {'mode': 'dcr'}}
+            assert config['extensions']['com.openai']['auth'] == {'type': 'oauth', 'client': {'mode': 'dcr'}}
             for key in ('logo', 'composerIcon'):
                 assert manifest['extensions']['com.openai']['interface'][key].removeprefix('./') in names
         else:

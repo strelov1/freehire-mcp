@@ -66,22 +66,8 @@ with tempfile.TemporaryDirectory(prefix='freehire-inspector-') as scratch:
                     envelope = candidate
                     break
             code = envelope.get('error', {}).get('code')
-            # Mixed auth returns a tool-level challenge after successful discovery.
-            # Inspector emits that result on stdout, then exits with tool_is_error.
-            challenge = False
-            if code == 'tool_is_error':
-                try:
-                    result = json.loads(stdout).get('result', {})
-                    challenges = result.get('_meta', {}).get('mcp/www_authenticate', [])
-                    challenge = result.get('isError') is True and isinstance(challenges, list) and any(
-                        isinstance(value, str)
-                        and 'resource_metadata="https://freehire.me/.well-known/oauth-protected-resource/api/v1/mcp"' in value
-                        and 'error="insufficient_scope"' in value
-                        for value in challenges)
-                except (json.JSONDecodeError, AttributeError):
-                    pass
-            check(name, process.returncode != 0 and (code == 'auth_required' or challenge),
-                  exit_code=process.returncode, error_code=code, tool_oauth_challenge=challenge)
+            check(name, process.returncode != 0 and code == 'auth_required',
+                  exit_code=process.returncode, error_code=code)
         else:
             check(name, process.returncode == 0, exit_code=process.returncode)
             data = json.loads(stdout)
@@ -99,14 +85,8 @@ with tempfile.TemporaryDirectory(prefix='freehire-inspector-') as scratch:
             names = sorted(tool['name'] for tool in tools)
             check('local-tools', {'search', 'whoami', 'my', 'subscribe', 'cv_tailor'} <= set(names), tool_count=len(names))
         else:
-            target = [endpoint, '--transport', 'http']
-            tools = run('public-list', target, ['--method', 'tools/list', '--strict'])['tools']
-            names = sorted(tool['name'] for tool in tools)
-            check('exact-hosted-tools', names == sorted(expected['public'] + expected['oauth']), tool_count=len(names))
-            search = run('public-search', target, ['--method', 'tools/call', '--tool-name', 'search_jobs',
-                                                  '--tool-arg', 'query=title:backend', '--tool-arg', 'limit=1'])
-            check('public-search-result', bool(search.get('content')) and search.get('isError') is not True)
-            run('personal-requires-sign-in', target, ['--method', 'tools/call', '--tool-name', 'my_jobs'], want_error=True)
+            # No anonymous session: an unauthenticated connect must ask for sign-in.
+            run('anonymous-requires-sign-in', [endpoint, '--transport', 'http'], ['--method', 'tools/list'], want_error=True)
             if args.token_file:
                 check('private-token-file', args.token_file.stat().st_mode & 0o077 == 0)
                 token = json.loads(args.token_file.read_text())['access_token']
@@ -116,14 +96,21 @@ with tempfile.TemporaryDirectory(prefix='freehire-inspector-') as scratch:
                 with os.fdopen(descriptor, 'w') as output:
                     json.dump({'mcpServers': {'freehire': {'type': 'http', 'url': endpoint,
                               'headers': {'Authorization': 'Bearer ' + token}}}}, output)
-                private = run('oauth-my-jobs', ['--config', str(config), '--server', 'freehire'],
-                              ['--method', 'tools/call', '--tool-name', 'my_jobs'])
+                signed_in = ['--config', str(config), '--server', 'freehire']
+                tools = run('oauth-list', signed_in, ['--method', 'tools/list', '--strict'])['tools']
+                names = {tool['name'] for tool in tools}
+                check('hosted-tools', set(expected['tools']) <= names, tool_count=len(names),
+                      missing=sorted(set(expected['tools']) - names))
+                search = run('oauth-search', signed_in, ['--method', 'tools/call', '--tool-name', 'search_jobs',
+                                                         '--tool-arg', 'query=title:backend', '--tool-arg', 'limit=1'])
+                check('oauth-search-result', bool(search.get('content')) and search.get('isError') is not True)
+                private = run('oauth-my-jobs', signed_in, ['--method', 'tools/call', '--tool-name', 'my_jobs'])
                 check('oauth-result-envelope', isinstance(private, dict) and isinstance(private.get('content'), list)
                       and private.get('isError') is not True)
                 board = json.loads(next(item['text'] for item in private['content'] if item.get('type') == 'text'))
                 check('oauth-tracked-jobs', isinstance(board.get('jobs'), list) and type(board.get('total')) is int)
             else:
-                proof['checks'].append({'name': 'oauth-my-jobs', 'status': 'blocked', 'reason': 'Reviewer token file missing'})
+                proof['checks'].append({'name': 'oauth-list', 'status': 'blocked', 'reason': 'Reviewer token file missing'})
                 proof['status'] = 'partial'
         if proof['status'] == 'running':
             proof['status'] = 'passed'

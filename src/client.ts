@@ -406,20 +406,20 @@ export class Client {
   /** callHosted calls one tool on freehire's own hosted MCP server and returns its result
    * as served — for the tools whose logic lives only there.
    *
-   * Both policies use /api/v1/mcp. `public` sends no credential for catalogue reads;
-   * `account` sends the caller's full-scope API key for job alerts. Forwarding keeps
-   * alerts on the website's saved search, channel rule and match ledger rather than
-   * re-implementing them here. OAuth-only tools remain unavailable to API keys.
+   * /api/v1/mcp admits no anonymous caller, so every call sends the caller's full-scope
+   * API key, catalogue reads included. Forwarding keeps alerts and the profile on the
+   * website's own rules rather than re-implementing them here. OAuth-only tools remain
+   * unavailable to API keys.
    *
    * The server is stateless, so one POST carrying tools/call is the whole exchange —
    * no initialize, no session. The answer may come back as JSON or as a one-event SSE
    * stream, depending on what the server prefers. */
-  async callHosted(server: "public" | "account", name: string, args: Record<string, unknown>): Promise<HostedResult> {
+  async callHosted(name: string, args: Record<string, unknown>): Promise<HostedResult> {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       Accept: "application/json, text/event-stream",
+      Authorization: `Bearer ${this.token}`,
     };
-    if (server === "account") headers.Authorization = `Bearer ${this.token}`;
     const path = "/api/v1/mcp";
     const body = JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/call", params: { name, arguments: args } });
 

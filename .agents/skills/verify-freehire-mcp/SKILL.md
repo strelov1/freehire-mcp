@@ -1,6 +1,6 @@
 ---
 name: verify-freehire-mcp
-description: Verify Freehire ChatGPT and claude.ai release ZIPs, local stdio MCP discovery, and the hosted public/OAuth MCP before changing plugin configuration or retiring an endpoint. Capture real transport and archive evidence; distinguish service checks from a ChatGPT UI sign-in test.
+description: Verify Freehire ChatGPT and claude.ai release ZIPs, local stdio MCP discovery, and the hosted OAuth-only MCP before changing plugin configuration or retiring an endpoint. Capture real transport and archive evidence; distinguish service checks from a ChatGPT UI sign-in test.
 ---
 
 # Verify Freehire MCP
@@ -42,10 +42,10 @@ credentials are a blocked precondition, never an empty successful account.
 node .agents/skills/verify-freehire-mcp/scripts/verify-mcp.mjs doctor --evidence "$verify_artifacts"
 ```
 
-This read-only check requires the configured canonical URL, 38 discoverable tools,
-eleven public security policies and matching RFC 9728 resource metadata. A service
-still serving eleven tools or a missing metadata document is a failed deployment
-precondition. Do not edit the expectation to match an old deployment.
+This read-only check requires the configured canonical URL, a 401 with the
+`resource_metadata` challenge for a request without a credential (there is no anonymous
+session since 2026-11-13) and matching RFC 9728 resource metadata. An anonymous 200 or
+a missing metadata document is a failed deployment precondition. Do not edit the expectation to match an old deployment.
 
 ## Drive
 
@@ -54,8 +54,8 @@ python3 .agents/skills/verify-freehire-mcp/scripts/verify-archives.py --evidence
 node .agents/skills/verify-freehire-mcp/scripts/verify-mcp.mjs hosted --evidence "$verify_artifacts"
 ```
 
-The hosted helper reads live search data, checks personal-tool OAuth step-up and
-refusal of an invalid token. For authenticated proof, supply an owner-only JSON
+The hosted helper checks the anonymous sign-in challenge and refusal of an invalid
+token. Tool discovery, search and personal reads need a credential. For that proof, supply an owner-only JSON
 file containing `access_token` from a dedicated review account:
 
 ```sh
@@ -63,7 +63,8 @@ node .agents/skills/verify-freehire-mcp/scripts/verify-mcp.mjs hosted --evidence
 ```
 
 No token on the command line or in evidence. Missing OAuth proof exits 2 and is
-reported as partial. Authenticated driving only lists tools and reads `my_jobs`;
+reported as partial. Authenticated driving lists tools (each must declare `oauth2` and the expected set must
+be present), runs one `search_jobs` and reads `my_jobs`;
 it neither changes account data nor submits an application. Writes require the
 specific feature's preconditions and the user's existing authorization.
 
@@ -79,9 +80,8 @@ The helper uses a temporary Inspector store and private config, disables browser
 auto-open and preserves only redacted assertions/exit codes. `--strict` schema
 errors fail; portability warnings are recorded separately. Optional `--npm-cache`
 reuses an explicitly selected cache; otherwise its scratch cache is removed.
-Anonymous personal-tool driving expects `auth_required`, or Inspector's
-`tool_is_error` with the canonical OAuth challenge in the returned MCP result.
-An unrelated tool error or silent success fails verification.
+An anonymous connect expects Inspector's `auth_required`. Any other error or a
+silent success fails verification.
 The recipe uses a POSIX process group to terminate only its children on timeout.
 
 For real host UI verification use the browser recipes in the feature map.
@@ -117,6 +117,6 @@ Evidence and copied release ZIPs survive cleanup. Confirm with
 - `scripts/verify-archives.py` verifies the two built download archives.
 - `scripts/verify-mcp.mjs` drives local stdio and hosted HTTP; invocation is above.
 - `scripts/verify-inspector.py` drives the pinned official Inspector CLI.
-- `scripts/expected-tools.json` defines the exact hosted public/personal capability sets.
+- `scripts/expected-tools.json` lists the hosted tools that must be served to a signed-in caller.
 - `features/README.md` indexes the maintained user journeys. Use
   `/maintain-verification-skill` when routes, tool schemas or packaging change.

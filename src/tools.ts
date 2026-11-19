@@ -117,7 +117,7 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
       },
       annotations: { readOnlyHint: false, idempotentHint: true },
     },
-    async (input) => forward(() => getClient().callHosted("account", "update_profile", args(input))),
+    async (input) => forward(() => getClient().callHosted("update_profile", args(input))),
   );
 
   server.registerTool(
@@ -568,8 +568,8 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
   );
 
   // Catalogue tools whose logic lives only on freehire's hosted MCP server: there is no
-  // REST route for them, so they are forwarded to it and answer in its own words. They
-  // read the public catalogue and need no key.
+  // REST route for them, so they are forwarded to it, with the key like every hosted call,
+  // and answer in its own words.
   const list = z.array(z.string()).optional();
   const hostedSearchShape = {
     query: z
@@ -605,7 +605,7 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
       inputSchema: { slugs: z.array(z.string().min(1)).min(1).describe("Posting slugs; up to 50 are checked per call.") },
       annotations: { readOnlyHint: true },
     },
-    async ({ slugs }) => forward(() => getClient().callHosted("public", "check_jobs_open", { slugs })),
+    async ({ slugs }) => forward(() => getClient().callHosted("check_jobs_open", { slugs })),
   );
 
   server.registerTool(
@@ -619,7 +619,7 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
       },
       annotations: { readOnlyHint: true },
     },
-    async (input) => forward(() => getClient().callHosted("public", "similar_jobs", args(input))),
+    async (input) => forward(() => getClient().callHosted("similar_jobs", args(input))),
   );
 
   server.registerTool(
@@ -634,7 +634,7 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
       },
       annotations: { readOnlyHint: true },
     },
-    async (input) => forward(() => getClient().callHosted("public", "salary_stats", args(input))),
+    async (input) => forward(() => getClient().callHosted("salary_stats", args(input))),
   );
 
   server.registerTool(
@@ -645,7 +645,7 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
       inputSchema: hostedSearchShape,
       annotations: { readOnlyHint: true },
     },
-    async (input) => forward(() => getClient().callHosted("public", "job_market_stats", args(input))),
+    async (input) => forward(() => getClient().callHosted("job_market_stats", args(input))),
   );
 
   server.registerTool(
@@ -668,7 +668,7 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
       },
       annotations: { readOnlyHint: true },
     },
-    async (input) => forward(() => getClient().callHosted("public", "list_filter_values", args(input))),
+    async (input) => forward(() => getClient().callHosted("list_filter_values", args(input))),
   );
 
   // Job alerts — forwarded to the signed-in hosted server with the API key, so an alert
@@ -709,7 +709,7 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
       },
       annotations: { readOnlyHint: false },
     },
-    async (input) => forward(() => getClient().callHosted("account", "subscribe", args(input))),
+    async (input) => forward(() => getClient().callHosted("subscribe", args(input))),
   );
 
   server.registerTool(
@@ -720,7 +720,7 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
       inputSchema: {},
       annotations: { readOnlyHint: true },
     },
-    async () => forward(() => getClient().callHosted("account", "list_subscriptions", {})),
+    async () => forward(() => getClient().callHosted("list_subscriptions", {})),
   );
 
   server.registerTool(
@@ -739,7 +739,7 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
       },
       annotations: { readOnlyHint: false, idempotentHint: true },
     },
-    async (input) => forward(() => getClient().callHosted("account", "update_subscription", args(input))),
+    async (input) => forward(() => getClient().callHosted("update_subscription", args(input))),
   );
 
   server.registerTool(
@@ -753,7 +753,7 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
       },
       annotations: { readOnlyHint: false, destructiveHint: true },
     },
-    async (input) => forward(() => getClient().callHosted("account", "unsubscribe", args(input))),
+    async (input) => forward(() => getClient().callHosted("unsubscribe", args(input))),
   );
 
   server.registerTool(
@@ -769,7 +769,7 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
       },
       annotations: { readOnlyHint: true },
     },
-    async (input) => forward(() => getClient().callHosted("account", "subscription_updates", args(input))),
+    async (input) => forward(() => getClient().callHosted("subscription_updates", args(input))),
   );
 
   // Moderator-only tools. A regular API key gets a 403 (surfaced as isError).

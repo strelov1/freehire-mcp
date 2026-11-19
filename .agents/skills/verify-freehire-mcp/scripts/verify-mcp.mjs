@@ -3,7 +3,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
@@ -38,9 +37,8 @@ async function rpc(method, params, token) {
     check(`${method}:rpc`, !envelope.error);
     result = envelope.result;
   }
-  return { status: response.status, result };
+  return { status: response.status, result, challenge: response.headers.get('www-authenticate') ?? '' };
 }
-function signature(tools) { return createHash('sha256').update(JSON.stringify(tools)).digest('hex'); }
 let client;
 let transport;
 try {
@@ -56,30 +54,16 @@ try {
     check('local-host-discovery', ['search', 'whoami', 'my', 'cv_tailor', 'subscribe'].every(name => names.includes(name)), { toolNames: names });
   } else {
     check('canonical-manifest', endpoint === 'https://freehire.me/api/v1/mcp' && Object.keys(servers).length === 1);
-    const listed = await rpc('tools/list', {});
-    check('anonymous-discovery', listed.status === 200 && Array.isArray(listed.result?.tools));
-    const tools = listed.result.tools;
-    const expected = JSON.parse(fs.readFileSync(new URL('./expected-tools.json', import.meta.url), 'utf8'));
-    const names = tools.map(tool => tool.name).sort();
-    const wanted = [...expected.public, ...expected.oauth].sort();
-    check('hosted-capabilities', JSON.stringify(names) === JSON.stringify(wanted), { toolCount: tools.length });
-    for (const tool of tools) {
-      const expectedType = expected.public.includes(tool.name) ? 'noauth' : 'oauth2';
-      const schemes = tool._meta?.securitySchemes;
-      check(`access-policy:${tool.name}`, Array.isArray(schemes) && schemes.length === 1 && schemes[0].type === expectedType);
-    }
+    // No anonymous session since 2026-11-13: the first request without a credential is a 401
+    // naming the resource metadata, the only signal hosts act on to open sign-in.
     const metadataURL = new URL('/.well-known/oauth-protected-resource/api/v1/mcp', endpoint);
+    const anonymous = await rpc('tools/list', {});
+    check('anonymous-challenge', anonymous.status === 401 && anonymous.challenge.includes(`resource_metadata="${metadataURL}"`));
     const response = await fetch(metadataURL, { signal: AbortSignal.timeout(30000) });
     check('resource-metadata-http', response.ok);
     const metadata = await response.json();
     check('resource-metadata', metadata.resource === endpoint && metadata.authorization_servers?.includes(new URL(endpoint).origin));
     if (mode === 'hosted') {
-      const search = await rpc('tools/call', { name: 'search_jobs', arguments: { query: 'title:backend', limit: 1 } });
-      check('anonymous-search', search.status === 200 && search.result?.isError !== true && search.result?.content?.length > 0);
-      const personal = await rpc('tools/call', { name: 'my_jobs', arguments: {} });
-      const challenges = personal.result?._meta?.['mcp/www_authenticate'];
-      check('personal-step-up', personal.status === 200 && personal.result?.isError === true && Array.isArray(challenges)
-        && challenges.some(value => value.includes(String(metadataURL)) && value.includes('error_description=')));
       const invalid = await rpc('tools/list', {}, 'fhm_verification_invalid_token');
       check('invalid-token-fails-closed', invalid.status === 401);
       const tokenFile = option('--token-file');
@@ -87,15 +71,26 @@ try {
         check('private-credential-file', (fs.statSync(tokenFile).mode & 0o077) === 0);
         const token = JSON.parse(fs.readFileSync(tokenFile, 'utf8')).access_token;
         check('oauth-credential-present', typeof token === 'string' && token.startsWith('fhm_'));
-        const signedIn = await rpc('tools/list', {}, token);
-        check('stable-oauth-catalogue', signedIn.status === 200 && signature(signedIn.result?.tools) === signature(tools));
+        const listed = await rpc('tools/list', {}, token);
+        check('oauth-discovery', listed.status === 200 && Array.isArray(listed.result?.tools));
+        const tools = listed.result.tools;
+        const names = tools.map(tool => tool.name);
+        const expected = JSON.parse(fs.readFileSync(new URL('./expected-tools.json', import.meta.url), 'utf8')).tools;
+        const missing = expected.filter(name => !names.includes(name));
+        check('hosted-capabilities', missing.length === 0, { toolCount: tools.length, missing });
+        for (const tool of tools) {
+          const schemes = tool._meta?.securitySchemes;
+          check(`access-policy:${tool.name}`, Array.isArray(schemes) && schemes.length === 1 && schemes[0].type === 'oauth2');
+        }
+        const search = await rpc('tools/call', { name: 'search_jobs', arguments: { query: 'title:backend', limit: 1 } }, token);
+        check('oauth-search', search.status === 200 && search.result?.isError !== true && search.result?.content?.length > 0);
         const jobs = await rpc('tools/call', { name: 'my_jobs', arguments: {} }, token);
         check('oauth-personal-read-envelope', jobs.status === 200 && jobs.result?.isError !== true && Array.isArray(jobs.result?.content));
         const text = jobs.result.content.find(item => item.type === 'text')?.text;
         const board = JSON.parse(text);
         check('oauth-personal-read', Array.isArray(board.jobs) && Number.isInteger(board.total));
       } else {
-        proof.checks.push({ name: 'oauth-personal-read', status: 'blocked', reason: 'Dedicated reviewer OAuth token file not supplied' });
+        proof.checks.push({ name: 'oauth-catalogue', status: 'blocked', reason: 'Dedicated reviewer OAuth token file not supplied' });
         proof.status = 'partial';
       }
     }

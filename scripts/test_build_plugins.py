@@ -98,7 +98,7 @@ class PluginArchivesTest(unittest.TestCase):
                 )
                 self.assertEqual(
                     mcp["mcpServers"]["freehire"]["extensions"]["com.openai"]["auth"],
-                    {"type": "mixed", "client": {"mode": "dcr"}},
+                    {"type": "oauth", "client": {"mode": "dcr"}},
                 )
                 self.assertEqual(
                     archive.read("skills/find-tech-jobs/references/current.md"),

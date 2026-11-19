@@ -46,7 +46,7 @@ your confirmation; automatic applications also require the account setting that 
 connected agents to apply.
 
 The ChatGPT package is `freehire` (display name **Freehire**), with a `freehire`
-MCP connection to the original URL and mixed public/OAuth authentication. Upload
+MCP connection to the original URL and OAuth authentication. Upload
 updates to the existing Freehire plugin. The separate Freehire Account plugin and
 its `/api/v1/mcp/account` endpoint remain available during client migration.
 
