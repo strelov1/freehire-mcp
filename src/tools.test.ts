@@ -99,6 +99,7 @@ describe("registerTools", () => {
         "subscription_updates",
         "unsave",
         "unsubscribe",
+        "update_profile",
         "update_subscription",
         "whoami",
       ].sort(),
@@ -224,6 +225,17 @@ describe("registerTools", () => {
     expect(last.url).toBe("/api/v1/mcp");
     expect(last.auth).toBe("Bearer fhk_test");
     expect(JSON.parse(last.body).params).toEqual({ name: "update_subscription", arguments: { id: 7, paused: true } });
+  });
+
+  it("update_profile forwards to the signed-in hosted server with the key", async () => {
+    apiBody = { jsonrpc: "2.0", id: 1, result: { content: [{ type: "text", text: '{"saved":["add_skills"]}' }] } };
+    const res = await mcp.callTool({ name: "update_profile", arguments: { add_skills: ["nx", "design systems"] } });
+    expect(res.isError).toBeFalsy();
+    expect(last.auth).toBe("Bearer fhk_test");
+    expect(JSON.parse(last.body).params).toEqual({
+      name: "update_profile",
+      arguments: { add_skills: ["nx", "design systems"] },
+    });
   });
 
   it("passes a hosted tool's refusal through as an isError result in its own words", async () => {

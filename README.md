@@ -160,6 +160,7 @@ rather than the server failing to start.
 | `stage` | Set the application stage (server-validated). |
 | `note` | Attach a free-text note. |
 | `my` | The caller's tracked jobs (all/viewed/saved/applied) with stage + note. |
+| `update_profile` | Change the saved profile: add or replace skills, roles, seniority, location, headline. |
 | `subscribe` | Create a job alert: a saved search delivered by email, Telegram, the app or a webhook. |
 | `list_subscriptions` | The caller's job alerts with every setting. |
 | `update_subscription` | Change an alert's name, search, channels, or pause it. |

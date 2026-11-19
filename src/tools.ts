@@ -93,6 +93,33 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
     async () => run(() => getClient().profile()),
   );
 
+  // Forwarded to the signed-in hosted server with the API key: PUT /me/profile is cookie-only,
+  // so the hosted tool (same dictionary and caps as the profile page) is the only key route.
+  const stringList = z.array(z.string());
+  server.registerTool(
+    "update_profile",
+    {
+      description:
+        "Change the caller's saved job-search profile: skills, specializations, seniorities, job languages, location preferences, headline and summary. It changes their account, so say what you are about to change and get their agreement first; call `profile` first. Send only the fields that change: a list you send REPLACES the stored one, so use add_skills to add skills without touching the rest. Skills are matched against freehire's skill dictionary; unknown ones are not saved and come back in not_in_dictionary. The result lists which fields were saved.",
+      inputSchema: {
+        add_skills: stringList.optional().describe('Skills to add to the stored list, e.g. ["nx", "cypress"]. Cannot be combined with skills.'),
+        skills: stringList.optional().describe("The full list of skills wanted. Replaces the stored list."),
+        excluded_skills: stringList.optional().describe("Skills to avoid. Replaces the stored list."),
+        specializations: stringList.optional().describe("Job categories wanted, from the specialization vocabulary (see facets)."),
+        seniorities: stringList.optional().describe("Levels wanted, e.g. senior, lead."),
+        job_languages: stringList.optional().describe("Two-letter codes of the languages vacancies may be written in."),
+        location_preferences: z
+          .record(z.string(), z.unknown())
+          .optional()
+          .describe("Where and how they will work (work_modes, remote, base, relocation). Replaces the whole block: read it from `profile` first."),
+        headline: z.string().optional().describe("The profile headline, one line. An empty string clears it."),
+        summary: z.string().optional().describe("The profile summary, a short paragraph. An empty string clears it."),
+      },
+      annotations: { readOnlyHint: false, idempotentHint: true },
+    },
+    async (input) => forward(() => getClient().callHosted("account", "update_profile", args(input))),
+  );
+
   server.registerTool(
     "facets",
     {
