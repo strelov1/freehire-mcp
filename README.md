@@ -23,7 +23,7 @@ same API, same credentials, exposed as MCP tools instead of shell commands.
 ### Hosted connection (public search and OAuth)
 
 The plugin connects to `https://freehire.me/api/v1/mcp` over Streamable HTTP.
-Public catalogue tools work without sign-in. Connect your account with OAuth for personal tools. It includes job
+Every tool requires OAuth sign-in, which the host opens when the connector is added. It includes job
 search and market research, plus your profile, saved jobs, application tracking,
 reports, alerts and account-enabled automatic applications. In Claude Code, install
 it as a plugin:

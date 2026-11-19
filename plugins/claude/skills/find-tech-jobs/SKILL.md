@@ -5,14 +5,15 @@ description: Search 4.9M+ unique open jobs from 437 sources, inspect employers, 
 
 # Find tech jobs with freehire
 
-Connect `https://freehire.me/api/v1/mcp` as a remote MCP connector. Public catalogue tools work without signing in; use the host's OAuth sign-in flow when a personal tool requests it. Use the tools and input schemas discovered from that connection. Uploading this skill alone does not connect an account. On an authentication error, ask the user to reconnect through the host's sign-in flow.
+Connect `https://freehire.me/api/v1/mcp` as a remote MCP connector. Every tool, including catalogue search, requires signing in through the host's OAuth flow; the server answers an unauthenticated request with a sign-in challenge. Use the tools and input schemas discovered from that connection. Uploading this skill alone does not connect an account. On an authentication error, ask the user to reconnect through the host's sign-in flow.
 
 freehire aggregates postings from company career boards and job sites. Preserve each result's source and original employer link.
 
 ## Search and market research
 
 - `get_profile` reads the signed-in candidate's saved preferences and skills. Use it when the user wants personalized matching; distinguish saved preferences from requirements they give now.
-- `list_filter_values` discovers supported filter values without sign-in. `facets` provides the signed-in catalogue vocabulary.
+- `get_setup_status` reports which setup steps the account still lacks (CV, preferences, alerts) and the one next step. `add_cv` stores the user's own CV text, verbatim, for an account that has none; never compose or summarise one.
+- `list_filter_values` discovers supported filter values. `facets` provides the catalogue vocabulary.
 - `search_jobs` searches postings using the live public schema: filters are top-level fields, for example `{"query":"title:SRE OR title:\"site reliability\"","work_mode":["remote"],"seniority":["senior"],"limit":5}`. Discover accepted names and values with `list_filter_values`; personal tools such as `market_fit` and alert tools can have different filter schemas.
 - `get_job` reads a posting by its returned slug; `check_jobs_open` checks a shortlist (up to 50 slugs); `similar_jobs` finds related postings.
 - `salary_stats` reports pay percentiles; `job_market_stats` reports matching demand and requirements. Include sample sizes, currency and period when supplied; label missing salary data.
@@ -36,6 +37,10 @@ When a desired skill, specialization or company industry is unrecognized by the 
 For a genuine failed operation or missing capability that prevents an intended step, call `report_problem` with concise `goal`, `expected` and `actual` fields describing the intended step, expected behavior and observed behavior. Follow the live schema's length limits. Set `category` to `tool_error` for a failed tool operation, `missing_capability` when the needed capability is unavailable, or `other` for another product problem. Include `tool_name` and `error_code` only when supplied or known. Send the minimum technical context: exclude tokens, credentials, CV content, full conversations and contact information or other identifying personal details. Ordinary empty results and dictionary gaps alone are not product problems.
 
 Report each distinct term or problem once during the task. Tell the user a suggestion or report was submitted only after that tool succeeds. On refusal or failure, describe the limitation accurately and continue with available alternatives. Do not retry the same report repeatedly or call `report_problem` to report a failure of either reporting tool. For an authentication or disconnected-account error, ask the user to reconnect through the host's sign-in flow; do not attempt a report through the disconnected connection. Keep progressing on the user's original task after reporting; if a reporting tool is absent from the connection, say it could not be submitted and continue.
+
+## Profile updates
+
+`update_profile` changes the saved job-search profile: skills, excluded skills, specializations, seniorities, job languages, location preferences, headline and summary. Read `get_profile` first, show the exact change, and get the user's confirmation; an explicit request naming the change counts. Send only the fields that change. Use `add_skills` to add skills without touching the rest: a sent list replaces the stored one, and `location_preferences` replaces the whole block. Add only skills the user claims or their saved evidence supports. Skills outside the dictionary come back in `not_in_dictionary` and are not saved; tell the user, and follow the dictionary workflow above for each one.
 
 ## Saved jobs, tracking and reports
 
