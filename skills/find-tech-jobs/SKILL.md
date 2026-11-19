@@ -14,7 +14,7 @@ freehire aggregates postings from company career boards and job sites. Preserve 
 - `get_profile` reads the signed-in candidate's saved preferences and skills. Use it when the user wants personalized matching; distinguish saved preferences from requirements they give now.
 - `get_setup_status` reports which setup steps the account still lacks (CV, preferences, alerts) and the one next step. `add_cv` stores the user's own CV text, verbatim, for an account that has none; never compose or summarise one.
 - `list_filter_values` discovers supported filter values. `facets` provides the catalogue vocabulary.
-- `search_jobs` searches postings using the live public schema: filters are top-level fields, for example `{"query":"title:SRE OR title:\"site reliability\"","work_mode":["remote"],"seniority":["senior"],"limit":5}`. Discover accepted names and values with `list_filter_values`; personal tools such as `market_fit` and alert tools can have different filter schemas.
+- `search_jobs` searches postings using the live schema: filters are top-level fields, for example `{"query":"title:SRE OR title:\"site reliability\"","work_mode":["remote"],"seniority":["senior"],"limit":5}`. Discover accepted names and values with `list_filter_values`; personal tools such as `market_fit` and alert tools can have different filter schemas.
 - `get_job` reads a posting by its returned slug; `check_jobs_open` checks a shortlist (up to 50 slugs); `similar_jobs` finds related postings.
 - `salary_stats` reports pay percentiles; `job_market_stats` reports matching demand and requirements. Include sample sizes, currency and period when supplied; label missing salary data.
 - `list_filter_values` resolves one filter's vocabulary and aliases.

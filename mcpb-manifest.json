@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "freehire",
   "display_name": "freehire.me",
-  "long_description": "Search 4.9M+ unique open jobs from 437 sources, with 680K+ company profiles and 178 ATS platforms in the catalogue. Find roles by stack, seniority, location, work mode and salary. Read full postings, compare advertised pay and track your shortlist. This local MCP server also supports CV tailoring through the freehire API.\n\nThe local server uses a personal API key, including a key already stored by the freehire CLI. For a hosted connection with public search and optional OAuth account access, use https://freehire.me/api/v1/mcp. Saving or marking a job applied updates tracking; it does not submit an application to an employer.\n\nCatalogue figures verified on 5 November 2026. Live figures: https://freehire.me/open.",
+  "long_description": "Search 4.9M+ unique open jobs from 437 sources, with 680K+ company profiles and 178 ATS platforms in the catalogue. Find roles by stack, seniority, location, work mode and salary. Read full postings, compare advertised pay and track your shortlist. This local MCP server also supports CV tailoring through the freehire API.\n\nThe local server uses a personal API key, including a key already stored by the freehire CLI. For a hosted connection with OAuth sign-in, use https://freehire.me/api/v1/mcp. Saving or marking a job applied updates tracking; it does not submit an application to an employer.\n\nCatalogue figures verified on 5 November 2026. Live figures: https://freehire.me/open.",
   "author": {
     "name": "strelov1",
     "url": "https://freehire.me"

@@ -7,9 +7,9 @@ and market figures, build a shortlist, and keep your application stages on the
 same tracking board you use at [freehire.me](https://freehire.me).
 
 This plugin includes the `find-tech-jobs` skill and the remote Freehire MCP
-connection at `https://freehire.me/api/v1/mcp`. Public search needs no account.
-Connect your Freehire account with OAuth when you want personal tools, such as
-saving jobs, reading your profile or updating application stages. Your host may
+connection at `https://freehire.me/api/v1/mcp`. Every tool, search included, needs
+your Freehire account: connect it with OAuth when the host asks. Personal tools
+include saving jobs, updating your profile and updating application stages. Your host may
 require you to start authentication from its connector settings.
 
 Saving a job or changing a stage does not send an application to an employer.

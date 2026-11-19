@@ -93,7 +93,7 @@
         }
       },
       "publication": {
-        "release_notes": "Updates Freehire setup to one public/OAuth MCP address, adds clearer job-search copy with verified catalogue figures, and forwards local MCP alert tools to the canonical endpoint. Existing legacy connections remain supported."
+        "release_notes": "Every tool now requires OAuth sign-in. Adds profile updates (update_profile) and guided setup guidance to the skill, and the local server sends its API key on every forwarded call. Existing legacy connections remain supported."
       }
     }
   }
