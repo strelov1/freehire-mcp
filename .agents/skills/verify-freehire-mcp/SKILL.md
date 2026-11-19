@@ -117,6 +117,6 @@ Evidence and copied release ZIPs survive cleanup. Confirm with
 - `scripts/verify-archives.py` verifies the two built download archives.
 - `scripts/verify-mcp.mjs` drives local stdio and hosted HTTP; invocation is above.
 - `scripts/verify-inspector.py` drives the pinned official Inspector CLI.
-- `scripts/expected-tools.json` lists the hosted tools that must be served to a signed-in caller.
+- `scripts/expected-tools.json` lists the hosted tools `tools/list` must show a signed-in caller. Rarely used tools are unlisted (reached through `find_tools` and `call_tool`), so they are not in it.
 - `features/README.md` indexes the maintained user journeys. Use
   `/maintain-verification-skill` when routes, tool schemas or packaging change.

@@ -1,18 +1,15 @@
 {
   "tools": [
-    "answer_bank_delete",
-    "answer_bank_list",
-    "answer_bank_save",
     "apply_job",
-    "auto_apply_cancel",
     "auto_apply_get",
     "auto_apply_list",
-    "auto_apply_retry",
     "auto_apply_review",
     "auto_apply_start",
+    "call_tool",
     "check_jobs_open",
     "facets",
     "fetch",
+    "find_tools",
     "get_company",
     "get_job",
     "get_profile",
@@ -21,12 +18,10 @@
     "list_subscriptions",
     "market_fit",
     "my_jobs",
-    "report_job",
     "report_problem",
     "salary_stats",
     "save_job",
     "screening_answers_get",
-    "screening_answers_set",
     "search",
     "search_companies",
     "search_jobs",
@@ -35,9 +30,6 @@
     "subscription_updates",
     "suggest_dictionary_term",
     "track_job",
-    "unsave_job",
-    "unsubscribe",
-    "update_profile",
-    "update_subscription"
+    "update_profile"
   ]
 }

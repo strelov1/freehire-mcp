@@ -5,7 +5,7 @@ description: Search 4.9M+ unique open jobs from 437 sources, inspect employers, 
 
 # Find tech jobs with freehire
 
-Connect `https://freehire.me/api/v1/mcp` as a remote MCP connector. Every tool, including catalogue search, requires signing in through the host's OAuth flow; the server answers an unauthenticated request with a sign-in challenge. Use the tools and input schemas discovered from that connection. Uploading this skill alone does not connect an account. On an authentication error, ask the user to reconnect through the host's sign-in flow.
+Connect `https://freehire.me/api/v1/mcp` as a remote MCP connector. Every tool, including catalogue search, requires signing in through the host's OAuth flow; the server answers an unauthenticated request with a sign-in challenge. Use the tools and input schemas discovered from that connection. Rarely used tools are unlisted: `unsave_job`, `report_job`, `update_subscription`, `unsubscribe`, `auto_apply_retry`, `auto_apply_cancel`, `answer_bank_list`, `answer_bank_save`, `answer_bank_delete`, `screening_answers_set` and the interview-buddy tools. Get their schemas from `find_tools` and run them with `call_tool` (`{"name": "unsubscribe", "arguments": {...}}`). Uploading this skill alone does not connect an account. On an authentication error, ask the user to reconnect through the host's sign-in flow.
 
 freehire aggregates postings from company career boards and job sites. Preserve each result's source and original employer link.
 
