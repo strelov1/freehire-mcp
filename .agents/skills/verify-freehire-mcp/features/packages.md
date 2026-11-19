@@ -23,7 +23,7 @@ Preconditions: launch/build completed; an empty unique evidence directory exists
 - **Build.** Run `npm run test:plugins` and `npm run build:plugins`; retain exit codes.
 - **Inspect.** Run `python3 .agents/skills/verify-freehire-mcp/scripts/verify-archives.py --evidence "$verify_artifacts"`.
   `archives.json` must show two valid ZIPs, matching version, source skill and
-  manifests, `freehire` identity, canonical URL and mixed/DCR configuration.
+  manifests, `freehire` identity, canonical URL and OAuth/DCR configuration.
 - **ChatGPT import.** With an authorized browser session, navigate to the existing
   Freehire portal card, snapshot it, choose `Create draft from ZIP` then `Upload plugin`,
   and select the exact verified ChatGPT ZIP. Capture the upload outcome, version,

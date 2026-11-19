@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "freehire",
-  "version": "1.0.6",
+  "version": "1.1.0",
   "description": "Search 4.9M+ unique open jobs from 437 sources. Find your next role, compare salaries and track your job search with AI.",
   "author": {
     "name": "ILYA STRELOV TECNOLOGIA DA INFORMACAO LTDA",
@@ -93,7 +93,7 @@
         }
       },
       "publication": {
-        "release_notes": "Updates Freehire setup to one public/OAuth MCP address, adds clearer job-search copy with verified catalogue figures, and forwards local MCP alert tools to the canonical endpoint. Existing legacy connections remain supported."
+        "release_notes": "Every tool now requires OAuth sign-in. Adds profile updates (update_profile) and guided setup guidance to the skill, and the local server sends its API key on every forwarded call. Existing legacy connections remain supported."
       }
     }
   }

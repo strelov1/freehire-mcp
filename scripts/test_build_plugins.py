@@ -15,7 +15,7 @@ class PluginArchivesTest(unittest.TestCase):
     def test_release_metadata_and_claude_connection_match(self):
         """Keep release metadata aligned with the unified connection."""
         package = json.loads((ROOT / "package.json").read_text())
-        self.assertEqual(package["version"], "1.0.6")
+        self.assertEqual(package["version"], "1.1.0")
         for filename in ("plugin.json", ".claude-plugin/plugin.json", "server.json"):
             manifest = json.loads((ROOT / filename).read_text())
             self.assertEqual(manifest["version"], package["version"], filename)
@@ -98,7 +98,7 @@ class PluginArchivesTest(unittest.TestCase):
                 )
                 self.assertEqual(
                     mcp["mcpServers"]["freehire"]["extensions"]["com.openai"]["auth"],
-                    {"type": "mixed", "client": {"mode": "dcr"}},
+                    {"type": "oauth", "client": {"mode": "dcr"}},
                 )
                 self.assertEqual(
                     archive.read("skills/find-tech-jobs/references/current.md"),

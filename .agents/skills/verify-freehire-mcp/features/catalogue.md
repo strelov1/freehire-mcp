@@ -1,11 +1,12 @@
-# Hosted public catalogue
+# Hosted catalogue
 
-A user can search and inspect live jobs without connecting an account.
+A signed-in user can search and inspect live jobs. There is no anonymous access: the
+first request without a credential is a 401 that makes the host open sign-in.
 
 ## Sub-features
 
-- `public-discovery`: 38 tools with eleven explicit public access policies.
-- `public-search`: a real catalogue query succeeds without a credential.
+- `discovery`: the expected tools are served, each declaring the `oauth2` policy.
+- `search`: a real catalogue query succeeds with a reviewer credential.
 - `host-presentation`: the host presents supported results and source links.
 
 ## How to get to it (user POV)
@@ -16,10 +17,11 @@ A user can search and inspect live jobs without connecting an account.
 
 ## Driving it with verify-freehire-mcp
 
-Preconditions: the unified backend is deployed; the doctor command passes.
+Preconditions: the unified backend is deployed; the doctor command passes; the
+reviewer's owner-only OAuth file is available.
 
-- **Transport.** Run `node .agents/skills/verify-freehire-mcp/scripts/verify-mcp.mjs hosted --evidence "$verify_artifacts"`.
-  Anonymous `search_jobs` with `query: title:backend` and `limit: 1` must succeed.
+- **Transport.** Run `node .agents/skills/verify-freehire-mcp/scripts/verify-mcp.mjs hosted --evidence "$verify_artifacts" --token-file "$reviewer_oauth_file"`.
+  Signed-in `search_jobs` with `query: title:backend` and `limit: 1` must succeed.
   A real empty result is valid data; an error result is a failure, not zero jobs.
 - **ChatGPT.** Open the connected Freehire conversation and enter:
   `Find up to three remote Go backend jobs. Show the company and original application link. Do not save or apply.`
@@ -29,8 +31,8 @@ Preconditions: the unified backend is deployed; the doctor command passes.
   open. Compare its slug and original source link with the prior search result.
 
 - **Inspector CLI.** Run `python3 .agents/skills/verify-freehire-mcp/scripts/verify-inspector.py hosted --evidence "$verify_artifacts"`. Inspect `inspector-hosted.json`;
-  schema warnings are recorded separately from failures. Hosted checks without a
-  reviewer token remain partial for the account-read entry point.
+  schema warnings are recorded separately from failures. Without a reviewer token
+  only the anonymous challenge is checked and the result is partial.
 
 ## Gotchas
 

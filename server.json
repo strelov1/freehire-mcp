@@ -3,7 +3,7 @@
   "name": "me.freehire/freehire",
   "title": "freehire",
   "description": "Search 4.9M+ unique open jobs from 437 sources. Save jobs and track applications with AI.",
-  "version": "1.0.6",
+  "version": "1.1.0",
   "websiteUrl": "https://freehire.me/mcp",
   "repository": {
     "url": "https://github.com/strelov1/freehire-mcp",
@@ -29,7 +29,7 @@
     {
       "registryType": "npm",
       "identifier": "freehire-mcp",
-      "version": "1.0.6",
+      "version": "1.1.0",
       "transport": {
         "type": "stdio"
       },

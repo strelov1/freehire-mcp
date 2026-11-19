@@ -9,8 +9,8 @@ The catalogue includes **680K+ company profiles and 178 ATS platforms**.
 Figures are from the exact catalogue snapshot on 5 November 2026
 ([live figures](https://freehire.me/open)).
 
-The hosted [MCP](https://modelcontextprotocol.io) connection offers public search
-without an account and personal tools through OAuth at one address. The local npm
+The hosted [MCP](https://modelcontextprotocol.io) connection offers search and personal
+tools at one address after OAuth sign-in. The local npm
 server uses a personal API key and also provides CV and experience-bank tools.
 Saving or marking a job applied updates tracking; employer submission is a separate
 OAuth workflow that requires explicit permission and review.
@@ -20,10 +20,10 @@ same API, same credentials, exposed as MCP tools instead of shell commands.
 
 ## Install
 
-### Hosted connection (public search and OAuth)
+### Hosted connection (OAuth)
 
 The plugin connects to `https://freehire.me/api/v1/mcp` over Streamable HTTP.
-Public catalogue tools work without sign-in. Connect your account with OAuth for personal tools. It includes job
+Every tool requires OAuth sign-in, which the host opens when the connector is added. It includes job
 search and market research, plus your profile, saved jobs, application tracking,
 reports, alerts and account-enabled automatic applications. In Claude Code, install
 it as a plugin:
@@ -46,7 +46,7 @@ your confirmation; automatic applications also require the account setting that 
 connected agents to apply.
 
 The ChatGPT package is `freehire` (display name **Freehire**), with a `freehire`
-MCP connection to the original URL and mixed public/OAuth authentication. Upload
+MCP connection to the original URL and OAuth authentication. Upload
 updates to the existing Freehire plugin. The separate Freehire Account plugin and
 its `/api/v1/mcp/account` endpoint remain available during client migration.
 
@@ -73,7 +73,7 @@ Both archives include the same `skills/find-tech-jobs/SKILL.md` source and its d
 and problem-reporting workflow. The hosted MCP connection discovers the live server's
 tools rather than bundling a fixed tool list; existing account tools remain available.
 The project-local `.agents/skills/verify-freehire-mcp` skill verifies the archives,
-local stdio discovery, hosted public access and OAuth using real transports and
+local stdio discovery, the hosted sign-in challenge and OAuth using real transports and
 the official MCP Inspector CLI. CI runs the archive/local checks and uploads the
 `freehire-verification-<commit>` proof artifact. Hosted checks additionally need
 the deployed unified backend and a dedicated reviewer OAuth grant.
@@ -160,6 +160,7 @@ rather than the server failing to start.
 | `stage` | Set the application stage (server-validated). |
 | `note` | Attach a free-text note. |
 | `my` | The caller's tracked jobs (all/viewed/saved/applied) with stage + note. |
+| `update_profile` | Change the saved profile: add or replace skills, roles, seniority, location, headline. |
 | `subscribe` | Create a job alert: a saved search delivered by email, Telegram, the app or a webhook. |
 | `list_subscriptions` | The caller's job alerts with every setting. |
 | `update_subscription` | Change an alert's name, search, channels, or pause it. |
@@ -214,9 +215,9 @@ suggested name before reporting it.
 
 **Forwarded tools.** `check_jobs_open`, `similar_jobs`, `salary_stats`,
 `job_market_stats` and `list_filter_values` have no REST route, so they are forwarded to
-the unified hosted MCP endpoint (`/api/v1/mcp`, no key sent for public reads). The five
-job-alert tools use the same endpoint with your full-access API key, so an alert made
-here is exactly the website's — the same saved search, channel rule and match ledger.
+the unified hosted MCP endpoint (`/api/v1/mcp`) with your full-access API key, which it
+requires on every call. The five job-alert tools and `update_profile` use the same
+endpoint, so an alert made here is exactly the website's — the same saved search, channel rule and match ledger.
 Their answers arrive in the hosted server's own words. Automatic applications
 (`auto_apply_*`) require OAuth on that same endpoint and are not offered to an API key.
 

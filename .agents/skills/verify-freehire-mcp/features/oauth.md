@@ -1,11 +1,11 @@
 # OAuth account and migration
 
-A user links their account when a personal action requires it while public tools
-continue working anonymously on the same URL.
+A user signs in when the connector is added: the endpoint answers any request without
+a credential with a 401 and the resource-metadata challenge.
 
 ## Sub-features
 
-- `oauth-step-up`: anonymous `my_jobs` requests sign-in before business execution.
+- `oauth-challenge`: an anonymous request is a 401 naming the resource metadata.
 - `oauth-read`: a dedicated reviewer grant reads its own tracked jobs.
 - `oauth-invalid`: a presented invalid token receives 401, never anonymous fallback.
 - `oauth-host`: the real host displays sign-in and returns to a working personal tool.
@@ -27,11 +27,11 @@ reviewer account exists, and its owner-only JSON OAuth file is available. A miss
 or expired grant is a failed precondition, not a passed account-read test.
 
 - **Transport.** Run `node .agents/skills/verify-freehire-mcp/scripts/verify-mcp.mjs hosted --evidence "$verify_artifacts" --token-file "$reviewer_oauth_file"`.
-  Require the anonymous challenge, refused invalid token, unchanged tool definitions
-  after authentication and successful `my_jobs`. Private result content is not stored.
-- **Real host.** Start with an unlinked test connector in ChatGPT. Ask for tracked
-  jobs, observe sign-in UI, authenticate the dedicated reviewer, approve consent,
-  return to the conversation and retry the read. Capture both UI states and actual
+  Require the anonymous challenge, refused invalid token, the expected `oauth2` tools
+  and successful `search_jobs` and `my_jobs`. Private result content is not stored.
+- **Real host.** Add an unlinked test connector in ChatGPT and observe the sign-in UI
+  when it is added, authenticate the dedicated reviewer, approve consent,
+  return to the conversation and ask for tracked jobs. Capture both UI states and actual
   tool success without exposing credentials or unrelated conversations.
 - **Claude Code.** In an isolated CLI configuration, add the canonical URL as an
   HTTP server, run `claude mcp login` with its configured name, authenticate the

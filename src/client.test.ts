@@ -303,7 +303,7 @@ describe("callHosted", () => {
       new Response(sse, { status: 200, headers: { "content-type": "text/event-stream" } })) as typeof fetch;
     const c = new Client("http://api.test", "k", fetchImpl);
 
-    const res = await c.callHosted("public", "salary_stats", {});
+    const res = await c.callHosted("salary_stats", {});
 
     expect(res.content).toEqual([{ type: "text", text: "ok" }]);
   });
@@ -313,6 +313,6 @@ describe("callHosted", () => {
     const fetchImpl = (async () => new Response(body, { status: 200 })) as typeof fetch;
     const c = new Client("http://api.test", "k", fetchImpl);
 
-    await expect(c.callHosted("public", "nope", {})).rejects.toThrow("unknown tool");
+    await expect(c.callHosted("nope", {})).rejects.toThrow("unknown tool");
   });
 });

@@ -1,6 +1,6 @@
 {
   "name": "freehire-mcp",
-  "version": "1.0.6",
+  "version": "1.1.0",
   "mcpName": "me.freehire/freehire",
   "description": "Search 4.9M+ unique open jobs from 437 sources. Find your next role, compare salaries and track your job search with AI.",
   "type": "module",

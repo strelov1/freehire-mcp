@@ -93,6 +93,33 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
     async () => run(() => getClient().profile()),
   );
 
+  // Forwarded to the signed-in hosted server with the API key: PUT /me/profile is cookie-only,
+  // so the hosted tool (same dictionary and caps as the profile page) is the only key route.
+  const stringList = z.array(z.string());
+  server.registerTool(
+    "update_profile",
+    {
+      description:
+        "Change the caller's saved job-search profile: skills, specializations, seniorities, job languages, location preferences, headline and summary. It changes their account, so say what you are about to change and get their agreement first; call `profile` first. Send only the fields that change: a list you send REPLACES the stored one, so use add_skills to add skills without touching the rest. Skills are matched against freehire's skill dictionary; unknown ones are not saved and come back in not_in_dictionary. The result lists which fields were saved.",
+      inputSchema: {
+        add_skills: stringList.optional().describe('Skills to add to the stored list, e.g. ["nx", "cypress"]. Cannot be combined with skills.'),
+        skills: stringList.optional().describe("The full list of skills wanted. Replaces the stored list."),
+        excluded_skills: stringList.optional().describe("Skills to avoid. Replaces the stored list."),
+        specializations: stringList.optional().describe("Job categories wanted, from the specialization vocabulary (see facets)."),
+        seniorities: stringList.optional().describe("Levels wanted, e.g. senior, lead."),
+        job_languages: stringList.optional().describe("Two-letter codes of the languages vacancies may be written in."),
+        location_preferences: z
+          .record(z.string(), z.unknown())
+          .optional()
+          .describe("Where and how they will work (work_modes, remote, base, relocation). Replaces the whole block: read it from `profile` first."),
+        headline: z.string().optional().describe("The profile headline, one line. An empty string clears it."),
+        summary: z.string().optional().describe("The profile summary, a short paragraph. An empty string clears it."),
+      },
+      annotations: { readOnlyHint: false, idempotentHint: true },
+    },
+    async (input) => forward(() => getClient().callHosted("update_profile", args(input))),
+  );
+
   server.registerTool(
     "facets",
     {
@@ -541,8 +568,8 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
   );
 
   // Catalogue tools whose logic lives only on freehire's hosted MCP server: there is no
-  // REST route for them, so they are forwarded to it and answer in its own words. They
-  // read the public catalogue and need no key.
+  // REST route for them, so they are forwarded to it, with the key like every hosted call,
+  // and answer in its own words.
   const list = z.array(z.string()).optional();
   const hostedSearchShape = {
     query: z
@@ -578,7 +605,7 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
       inputSchema: { slugs: z.array(z.string().min(1)).min(1).describe("Posting slugs; up to 50 are checked per call.") },
       annotations: { readOnlyHint: true },
     },
-    async ({ slugs }) => forward(() => getClient().callHosted("public", "check_jobs_open", { slugs })),
+    async ({ slugs }) => forward(() => getClient().callHosted("check_jobs_open", { slugs })),
   );
 
   server.registerTool(
@@ -592,7 +619,7 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
       },
       annotations: { readOnlyHint: true },
     },
-    async (input) => forward(() => getClient().callHosted("public", "similar_jobs", args(input))),
+    async (input) => forward(() => getClient().callHosted("similar_jobs", args(input))),
   );
 
   server.registerTool(
@@ -607,7 +634,7 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
       },
       annotations: { readOnlyHint: true },
     },
-    async (input) => forward(() => getClient().callHosted("public", "salary_stats", args(input))),
+    async (input) => forward(() => getClient().callHosted("salary_stats", args(input))),
   );
 
   server.registerTool(
@@ -618,7 +645,7 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
       inputSchema: hostedSearchShape,
       annotations: { readOnlyHint: true },
     },
-    async (input) => forward(() => getClient().callHosted("public", "job_market_stats", args(input))),
+    async (input) => forward(() => getClient().callHosted("job_market_stats", args(input))),
   );
 
   server.registerTool(
@@ -641,7 +668,7 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
       },
       annotations: { readOnlyHint: true },
     },
-    async (input) => forward(() => getClient().callHosted("public", "list_filter_values", args(input))),
+    async (input) => forward(() => getClient().callHosted("list_filter_values", args(input))),
   );
 
   // Job alerts — forwarded to the signed-in hosted server with the API key, so an alert
@@ -682,7 +709,7 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
       },
       annotations: { readOnlyHint: false },
     },
-    async (input) => forward(() => getClient().callHosted("account", "subscribe", args(input))),
+    async (input) => forward(() => getClient().callHosted("subscribe", args(input))),
   );
 
   server.registerTool(
@@ -693,7 +720,7 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
       inputSchema: {},
       annotations: { readOnlyHint: true },
     },
-    async () => forward(() => getClient().callHosted("account", "list_subscriptions", {})),
+    async () => forward(() => getClient().callHosted("list_subscriptions", {})),
   );
 
   server.registerTool(
@@ -712,7 +739,7 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
       },
       annotations: { readOnlyHint: false, idempotentHint: true },
     },
-    async (input) => forward(() => getClient().callHosted("account", "update_subscription", args(input))),
+    async (input) => forward(() => getClient().callHosted("update_subscription", args(input))),
   );
 
   server.registerTool(
@@ -726,7 +753,7 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
       },
       annotations: { readOnlyHint: false, destructiveHint: true },
     },
-    async (input) => forward(() => getClient().callHosted("account", "unsubscribe", args(input))),
+    async (input) => forward(() => getClient().callHosted("unsubscribe", args(input))),
   );
 
   server.registerTool(
@@ -742,7 +769,7 @@ export function registerTools(server: McpServer, getClient: GetClient): void {
       },
       annotations: { readOnlyHint: true },
     },
-    async (input) => forward(() => getClient().callHosted("account", "subscription_updates", args(input))),
+    async (input) => forward(() => getClient().callHosted("subscription_updates", args(input))),
   );
 
   // Moderator-only tools. A regular API key gets a 403 (surfaced as isError).

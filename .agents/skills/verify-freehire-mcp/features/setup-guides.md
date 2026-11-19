@@ -5,12 +5,11 @@
 - `website-address`: /mcp, /cli, /agents, /chatgpt and onboarding offer one canonical hosted URL.
 - `host-login`: Claude Code and Codex describe explicit optional OAuth login.
 - `directory`: the original Freehire listings advertise current tools and optional account access.
-- `blog`: /blog/2026-11-05-unified-mcp explains public search, OAuth, permissions and legacy migration.
+- `blog`: /blog/2026-11-05-unified-mcp explains OAuth sign-in, permissions and legacy migration.
 
 ## How to get to it (user POV)
 
-Open https://freehire.me/mcp and choose each assistant. Public search and personal
-tools must use https://freehire.me/api/v1/mcp. The CLI tab documents a distinct
+Open https://freehire.me/mcp and choose each assistant. Every tool must use https://freehire.me/api/v1/mcp. The CLI tab documents a distinct
 local executable, not a second hosted account endpoint. Follow the Claude and
 ChatGPT directory links to the original Freehire listings.
 
@@ -28,9 +27,9 @@ the backend repository's existing blog tests and a real build. Historic referenc
 to /mcp/account may explain compatibility but must not be a new-setup command.
 
 Run the hosted SDK/Inspector recipes in the main skill to verify that the documented
-URL still offers both public search and OAuth account reads. Local stdio forwarding
-must use that same path for both policies, sending no key for public reads and the
-configured key only for allowed personal operations. Use Node 22.12+ for the development test runner, then run `npm test` for this contract.
+URL asks an anonymous caller to sign in and serves search and account reads after
+it. Local stdio forwarding uses that same path and sends the configured key on every
+call, catalogue reads included. Use Node 22.12+ for the development test runner, then run `npm test` for this contract.
 
 Directory tests need an authorized publisher session. Capture current settings,
 server tool discovery, submitted changes and actual review status separately.
