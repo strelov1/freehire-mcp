@@ -12,7 +12,12 @@
   "icon": "./assets/icon.png",
   "privacyPolicyUrl": "https://freehire.me/privacy",
   "skills": "./skills/",
-  "mcpServers": "./.claude-plugin/mcp.json",
+  "mcpServers": {
+    "freehire": {
+      "type": "http",
+      "url": "https://freehire.me/api/v1/mcp"
+    }
+  },
   "keywords": [
     "jobs",
     "job-search",
