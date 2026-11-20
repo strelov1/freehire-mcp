@@ -10,8 +10,8 @@ Figures are from the exact catalogue snapshot on 5 November 2026
 ([live figures](https://freehire.me/open)).
 
 The hosted [MCP](https://modelcontextprotocol.io) connection offers search and personal
-tools at one address after OAuth sign-in. The local npm
-server uses a personal API key and also provides CV and experience-bank tools.
+tools at one address after OAuth sign-in, including the experience bank and tailored CVs.
+The local npm server offers the same CV and experience-bank tools with a personal API key.
 Saving or marking a job applied updates tracking; employer submission is a separate
 OAuth workflow that requires explicit permission and review.
 
@@ -100,8 +100,10 @@ publishing still follows the listing's review settings.
 The hosted tools use names such as `search_jobs`, `get_job`, `get_profile`,
 `save_job`, `track_job` and `my_jobs`; discover their current schemas in your host.
 The unified hosted search uses top-level public filter fields; discover its live schema.
-Personal tools may use nested `filters`, so inspect each tool separately. CV tailoring and experience
-bank tools in the local server below are not part of this account connection.
+Personal tools may use nested `filters`, so inspect each tool separately. The experience-bank
+(`experience_*`) and tailored-CV (`cv_*`) tools are in the account connection too, but not in its
+tool list: find them with `find_tools` and run them with `call_tool`. There, `cv_render` returns a
+link to the PDF instead of the file, and `cv_tailor` needs a paid plan, as on the website.
 
 ### Local server (npm)
 
